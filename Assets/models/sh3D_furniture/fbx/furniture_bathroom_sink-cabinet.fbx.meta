@@ -1,0 +1,139 @@
+fileFormatVersion: 2
+guid: 57fa39b96e9568c4b830e3613892491b
+timeCreated: 1530359976
+licenseType: Free
+ModelImporter:
+  serializedVersion: 19
+  fileIDToRecycleName:
+    100000: Corps_106
+    100002: //RootNode
+    100004: Lavabo_101
+    100006: Poignee_108
+    100008: Poignee_1_111
+    100010: Porte_107
+    100012: Porte_1_112
+    100014: Robinet2_110
+    100016: Robinet_109
+    100018: Robinet_droit16_105
+    100020: Robinet_droit_104
+    100022: Robinet_gauche16_103
+    100024: Robinet_gauche_102
+    400000: Corps_106
+    400002: //RootNode
+    400004: Lavabo_101
+    400006: Poignee_108
+    400008: Poignee_1_111
+    400010: Porte_107
+    400012: Porte_1_112
+    400014: Robinet2_110
+    400016: Robinet_109
+    400018: Robinet_droit16_105
+    400020: Robinet_droit_104
+    400022: Robinet_gauche16_103
+    400024: Robinet_gauche_102
+    2300000: Corps_106
+    2300002: Lavabo_101
+    2300004: Poignee_108
+    2300006: Poignee_1_111
+    2300008: Porte_107
+    2300010: Porte_1_112
+    2300012: Robinet2_110
+    2300014: Robinet_109
+    2300016: Robinet_droit16_105
+    2300018: Robinet_droit_104
+    2300020: Robinet_gauche16_103
+    2300022: Robinet_gauche_102
+    3300000: Corps_106
+    3300002: Lavabo_101
+    3300004: Poignee_108
+    3300006: Poignee_1_111
+    3300008: Porte_107
+    3300010: Porte_1_112
+    3300012: Robinet2_110
+    3300014: Robinet_109
+    3300016: Robinet_droit16_105
+    3300018: Robinet_droit_104
+    3300020: Robinet_gauche16_103
+    3300022: Robinet_gauche_102
+    4300000: Porte_107
+    4300002: Robinet_gauche16_103
+    4300004: Corps_106
+    4300006: Robinet2_110
+    4300008: Porte_1_112
+    4300010: Robinet_droit_104
+    4300012: Robinet_109
+    4300014: Robinet_droit16_105
+    4300016: Lavabo_101
+    4300018: Poignee_1_111
+    4300020: Poignee_108
+    4300022: Robinet_gauche_102
+  materials:
+    importMaterials: 1
+    materialName: 0
+    materialSearch: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    importBlendShapes: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 1
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    rootMotionBoneRotation: {x: 0, y: 0, z: 0, w: 1}
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 0
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

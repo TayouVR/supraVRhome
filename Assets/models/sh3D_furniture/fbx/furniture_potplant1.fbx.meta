@@ -1,0 +1,226 @@
+fileFormatVersion: 2
+guid: fdfee1f1f0facfb46950f8f438788bc1
+timeCreated: 1530349841
+licenseType: Free
+ModelImporter:
+  serializedVersion: 19
+  fileIDToRecycleName:
+    100000: Feuille_10_326
+    100002: Feuille_11_325
+    100004: Feuille_12_306
+    100006: Feuille_13_316
+    100008: Feuille_14_313
+    100010: Feuille_15_307
+    100012: Feuille_16_312
+    100014: Feuille_17_305
+    100016: Feuille_18_299
+    100018: Feuille_19_319
+    100020: Feuille_1_327
+    100022: Feuille_20_323
+    100024: Feuille_21_310
+    100026: Feuille_22_301
+    100028: Feuille_23_314
+    100030: Feuille_2_304
+    100032: Feuille_303
+    100034: Feuille_3_300
+    100036: Feuille_4_318
+    100038: Feuille_5_308
+    100040: Feuille_6_315
+    100042: Feuille_7_324
+    100044: Feuille_8_309
+    100046: Feuille_9_302
+    100048: //RootNode
+    100050: Pot16_322
+    100052: Pot_321
+    100054: Terre_317
+    100056: Tube_1_311
+    100058: Tube_2_320
+    400000: Feuille_10_326
+    400002: Feuille_11_325
+    400004: Feuille_12_306
+    400006: Feuille_13_316
+    400008: Feuille_14_313
+    400010: Feuille_15_307
+    400012: Feuille_16_312
+    400014: Feuille_17_305
+    400016: Feuille_18_299
+    400018: Feuille_19_319
+    400020: Feuille_1_327
+    400022: Feuille_20_323
+    400024: Feuille_21_310
+    400026: Feuille_22_301
+    400028: Feuille_23_314
+    400030: Feuille_2_304
+    400032: Feuille_303
+    400034: Feuille_3_300
+    400036: Feuille_4_318
+    400038: Feuille_5_308
+    400040: Feuille_6_315
+    400042: Feuille_7_324
+    400044: Feuille_8_309
+    400046: Feuille_9_302
+    400048: //RootNode
+    400050: Pot16_322
+    400052: Pot_321
+    400054: Terre_317
+    400056: Tube_1_311
+    400058: Tube_2_320
+    2300000: Feuille_10_326
+    2300002: Feuille_11_325
+    2300004: Feuille_12_306
+    2300006: Feuille_13_316
+    2300008: Feuille_14_313
+    2300010: Feuille_15_307
+    2300012: Feuille_16_312
+    2300014: Feuille_17_305
+    2300016: Feuille_18_299
+    2300018: Feuille_19_319
+    2300020: Feuille_1_327
+    2300022: Feuille_20_323
+    2300024: Feuille_21_310
+    2300026: Feuille_22_301
+    2300028: Feuille_23_314
+    2300030: Feuille_2_304
+    2300032: Feuille_303
+    2300034: Feuille_3_300
+    2300036: Feuille_4_318
+    2300038: Feuille_5_308
+    2300040: Feuille_6_315
+    2300042: Feuille_7_324
+    2300044: Feuille_8_309
+    2300046: Feuille_9_302
+    2300048: Pot16_322
+    2300050: Pot_321
+    2300052: Terre_317
+    2300054: Tube_1_311
+    2300056: Tube_2_320
+    2300058: //RootNode
+    3300000: Feuille_10_326
+    3300002: Feuille_11_325
+    3300004: Feuille_12_306
+    3300006: Feuille_13_316
+    3300008: Feuille_14_313
+    3300010: Feuille_15_307
+    3300012: Feuille_16_312
+    3300014: Feuille_17_305
+    3300016: Feuille_18_299
+    3300018: Feuille_19_319
+    3300020: Feuille_1_327
+    3300022: Feuille_20_323
+    3300024: Feuille_21_310
+    3300026: Feuille_22_301
+    3300028: Feuille_23_314
+    3300030: Feuille_2_304
+    3300032: Feuille_303
+    3300034: Feuille_3_300
+    3300036: Feuille_4_318
+    3300038: Feuille_5_308
+    3300040: Feuille_6_315
+    3300042: Feuille_7_324
+    3300044: Feuille_8_309
+    3300046: Feuille_9_302
+    3300048: Pot16_322
+    3300050: Pot_321
+    3300052: Terre_317
+    3300054: Tube_1_311
+    3300056: Tube_2_320
+    3300058: //RootNode
+    4300000: Feuille_4_318
+    4300002: Feuille_9_302
+    4300004: Tube_1_311
+    4300006: Feuille_8_309
+    4300008: Feuille_22_301
+    4300010: Feuille_303
+    4300012: Feuille_15_307
+    4300014: Terre_317
+    4300016: Feuille_3_300
+    4300018: Feuille_21_310
+    4300020: Tube_2_320
+    4300022: Pot_321
+    4300024: Feuille_10_326
+    4300026: Feuille_11_325
+    4300028: Feuille_19_319
+    4300030: Feuille_6_315
+    4300032: Feuille_2_304
+    4300034: Feuille_13_316
+    4300036: Feuille_18_299
+    4300038: Pot16_322
+    4300040: Feuille_16_312
+    4300042: Feuille_14_313
+    4300044: Feuille_7_324
+    4300046: Feuille_12_306
+    4300048: Feuille_23_314
+    4300050: Feuille_17_305
+    4300052: Feuille_1_327
+    4300054: Feuille_20_323
+    4300056: Feuille_5_308
+  materials:
+    importMaterials: 1
+    materialName: 0
+    materialSearch: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    importBlendShapes: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 1
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    rootMotionBoneRotation: {x: 0, y: 0, z: 0, w: 1}
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 0
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

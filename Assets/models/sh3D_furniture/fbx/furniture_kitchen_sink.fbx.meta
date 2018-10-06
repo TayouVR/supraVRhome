@@ -1,0 +1,154 @@
+fileFormatVersion: 2
+guid: 73c7aa046a6f0434cafd52c33e0c8366
+timeCreated: 1530359977
+licenseType: Free
+ModelImporter:
+  serializedVersion: 19
+  fileIDToRecycleName:
+    100000: Evier41_142
+    100002: Evier_141
+    100004: //RootNode
+    100006: Meuble_135
+    100008: Poignee16_138
+    100010: Poignee_116_134
+    100012: Poignee_137
+    100014: Poignee_1_133
+    100016: Porte_136
+    100018: Porte_1_147
+    100020: Robinet8_140
+    100022: Robinet_139
+    100024: Robinet_droit16_144
+    100026: Robinet_droit_143
+    100028: Robinet_gauche16_146
+    100030: Robinet_gauche_145
+    400000: Evier41_142
+    400002: Evier_141
+    400004: //RootNode
+    400006: Meuble_135
+    400008: Poignee16_138
+    400010: Poignee_116_134
+    400012: Poignee_137
+    400014: Poignee_1_133
+    400016: Porte_136
+    400018: Porte_1_147
+    400020: Robinet8_140
+    400022: Robinet_139
+    400024: Robinet_droit16_144
+    400026: Robinet_droit_143
+    400028: Robinet_gauche16_146
+    400030: Robinet_gauche_145
+    2300000: Evier41_142
+    2300002: Evier_141
+    2300004: Meuble_135
+    2300006: Poignee16_138
+    2300008: Poignee_116_134
+    2300010: Poignee_137
+    2300012: Poignee_1_133
+    2300014: Porte_136
+    2300016: Porte_1_147
+    2300018: Robinet8_140
+    2300020: Robinet_139
+    2300022: Robinet_droit16_144
+    2300024: Robinet_droit_143
+    2300026: Robinet_gauche16_146
+    2300028: Robinet_gauche_145
+    3300000: Evier41_142
+    3300002: Evier_141
+    3300004: Meuble_135
+    3300006: Poignee16_138
+    3300008: Poignee_116_134
+    3300010: Poignee_137
+    3300012: Poignee_1_133
+    3300014: Porte_136
+    3300016: Porte_1_147
+    3300018: Robinet8_140
+    3300020: Robinet_139
+    3300022: Robinet_droit16_144
+    3300024: Robinet_droit_143
+    3300026: Robinet_gauche16_146
+    3300028: Robinet_gauche_145
+    4300000: Robinet_139
+    4300002: Robinet_droit_143
+    4300004: Porte_1_147
+    4300006: Poignee16_138
+    4300008: Robinet_droit16_144
+    4300010: Meuble_135
+    4300012: Robinet_gauche_145
+    4300014: Poignee_116_134
+    4300016: Evier41_142
+    4300018: Evier_141
+    4300020: Poignee_137
+    4300022: Robinet_gauche16_146
+    4300024: Robinet8_140
+    4300026: Poignee_1_133
+    4300028: Porte_136
+  materials:
+    importMaterials: 1
+    materialName: 0
+    materialSearch: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    importBlendShapes: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 1
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    rootMotionBoneRotation: {x: 0, y: 0, z: 0, w: 1}
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 0
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

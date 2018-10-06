@@ -1,0 +1,131 @@
+fileFormatVersion: 2
+guid: cc5eaf80fee1cbb408aa62f284a5f933
+timeCreated: 1530349841
+licenseType: Free
+ModelImporter:
+  serializedVersion: 19
+  fileIDToRecycleName:
+    100000: 2
+    100002: 3
+    100004: 4
+    100006: 6
+    100008: Empty
+    100010: Feet_Cylinder_5
+    100012: //RootNode
+    100014: Matress_Cube_7
+    100016: bed_static_part
+    100018: blanket
+    100020: pillow_left
+    100022: pillow_right
+    400000: 2
+    400002: 3
+    400004: 4
+    400006: 6
+    400008: Empty
+    400010: Feet_Cylinder_5
+    400012: //RootNode
+    400014: Matress_Cube_7
+    400016: bed_static_part
+    400018: blanket
+    400020: pillow_left
+    400022: pillow_right
+    2300000: 2
+    2300002: 3
+    2300004: 4
+    2300006: 6
+    2300008: Feet_Cylinder_5
+    2300010: Matress_Cube_7
+    2300012: bed_static_part
+    2300014: blanket
+    2300016: pillow_left
+    2300018: pillow_right
+    3300000: 2
+    3300002: 3
+    3300004: 4
+    3300006: 6
+    3300008: Feet_Cylinder_5
+    3300010: Matress_Cube_7
+    3300012: bed_static_part
+    3300014: blanket
+    3300016: pillow_left
+    3300018: pillow_right
+    4300000: Matress_Cube_7
+    4300002: 3
+    4300004: Feet_Cylinder_5
+    4300006: 6
+    4300008: 2
+    4300010: 4
+    4300012: bed_static_part
+    4300014: pillow_right
+    4300016: blanket
+    4300018: pillow_left
+  materials:
+    importMaterials: 1
+    materialName: 0
+    materialSearch: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    importBlendShapes: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 1
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    rootMotionBoneRotation: {x: 0, y: 0, z: 0, w: 1}
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 0
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

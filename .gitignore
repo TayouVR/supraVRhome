@@ -34,3 +34,6 @@ sysinfo.txt
 # Builds
 *.apk
 *.unitypackage
+
+# Big files
+/Assets/shaders/Cubeds-Unity-Shaders-master/

@@ -1,0 +1,171 @@
+fileFormatVersion: 2
+guid: 436bbd556c939f14bb57deb327135bca
+timeCreated: 1530349841
+licenseType: Free
+ModelImporter:
+  serializedVersion: 19
+  fileIDToRecycleName:
+    100000: Accroche_mur2_277
+    100002: Accroche_mur_276
+    100004: Bac5_269
+    100006: Bac_268
+    100008: Cylinder_152_273
+    100010: Cylinder_15_12_271
+    100012: Cylinder_15_1_270
+    100014: Cylinder_15_272
+    100016: Evacuation_282
+    100018: //RootNode
+    100020: Paume_285
+    100022: Robinet_droit16_275
+    100024: Robinet_droit_274
+    100026: Robinet_gauche16_284
+    100028: Robinet_gauche_283
+    100030: Robinetterie16_281
+    100032: Robinetterie_280
+    100034: Tube_douche1_279
+    100036: Tube_douche_278
+    400000: Accroche_mur2_277
+    400002: Accroche_mur_276
+    400004: Bac5_269
+    400006: Bac_268
+    400008: Cylinder_152_273
+    400010: Cylinder_15_12_271
+    400012: Cylinder_15_1_270
+    400014: Cylinder_15_272
+    400016: Evacuation_282
+    400018: //RootNode
+    400020: Paume_285
+    400022: Robinet_droit16_275
+    400024: Robinet_droit_274
+    400026: Robinet_gauche16_284
+    400028: Robinet_gauche_283
+    400030: Robinetterie16_281
+    400032: Robinetterie_280
+    400034: Tube_douche1_279
+    400036: Tube_douche_278
+    2300000: Accroche_mur2_277
+    2300002: Accroche_mur_276
+    2300004: Bac5_269
+    2300006: Bac_268
+    2300008: Cylinder_152_273
+    2300010: Cylinder_15_12_271
+    2300012: Cylinder_15_1_270
+    2300014: Cylinder_15_272
+    2300016: Evacuation_282
+    2300018: Paume_285
+    2300020: Robinet_droit16_275
+    2300022: Robinet_droit_274
+    2300024: Robinet_gauche16_284
+    2300026: Robinet_gauche_283
+    2300028: Robinetterie16_281
+    2300030: Robinetterie_280
+    2300032: Tube_douche1_279
+    2300034: Tube_douche_278
+    2300036: //RootNode
+    3300000: Accroche_mur2_277
+    3300002: Accroche_mur_276
+    3300004: Bac5_269
+    3300006: Bac_268
+    3300008: Cylinder_152_273
+    3300010: Cylinder_15_12_271
+    3300012: Cylinder_15_1_270
+    3300014: Cylinder_15_272
+    3300016: Evacuation_282
+    3300018: Paume_285
+    3300020: Robinet_droit16_275
+    3300022: Robinet_droit_274
+    3300024: Robinet_gauche16_284
+    3300026: Robinet_gauche_283
+    3300028: Robinetterie16_281
+    3300030: Robinetterie_280
+    3300032: Tube_douche1_279
+    3300034: Tube_douche_278
+    3300036: //RootNode
+    4300000: Cylinder_15_12_271
+    4300002: Robinetterie16_281
+    4300004: Robinet_droit_274
+    4300006: Robinetterie_280
+    4300008: Cylinder_15_272
+    4300010: Cylinder_152_273
+    4300012: Tube_douche_278
+    4300014: Robinet_gauche_283
+    4300016: Accroche_mur2_277
+    4300018: Cylinder_15_1_270
+    4300020: Bac5_269
+    4300022: Robinet_droit16_275
+    4300024: Bac_268
+    4300026: Tube_douche1_279
+    4300028: Evacuation_282
+    4300030: Robinet_gauche16_284
+    4300032: Paume_285
+    4300034: Accroche_mur_276
+  materials:
+    importMaterials: 1
+    materialName: 0
+    materialSearch: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    importBlendShapes: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 1
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    rootMotionBoneRotation: {x: 0, y: 0, z: 0, w: 1}
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 0
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

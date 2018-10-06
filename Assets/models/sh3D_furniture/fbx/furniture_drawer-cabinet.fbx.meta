@@ -1,0 +1,129 @@
+fileFormatVersion: 2
+guid: 2be8586a8b9bcde48a826a81519bb220
+timeCreated: 1530389805
+licenseType: Free
+ModelImporter:
+  serializedVersion: 19
+  fileIDToRecycleName:
+    100000: Corps_20
+    100002: //RootNode
+    100004: Poignee_14
+    100006: Poignee_1_12
+    100008: Poignee_216_11
+    100010: Poignee_516_9
+    100012: drawer_bottom
+    100014: drawer_container
+    100016: drawer_middle
+    100018: drawer_top_left
+    100020: drawer_top_right
+    400000: Corps_20
+    400002: //RootNode
+    400004: Poignee_14
+    400006: Poignee_1_12
+    400008: Poignee_216_11
+    400010: Poignee_516_9
+    400012: drawer_bottom
+    400014: drawer_container
+    400016: drawer_middle
+    400018: drawer_top_left
+    400020: drawer_top_right
+    2300000: Corps_20
+    2300002: Poignee_14
+    2300004: Poignee_1_12
+    2300006: Poignee_216_11
+    2300008: Poignee_516_9
+    2300010: drawer_bottom
+    2300012: drawer_container
+    2300014: drawer_middle
+    2300016: drawer_top_left
+    2300018: drawer_top_right
+    3300000: Corps_20
+    3300002: Poignee_14
+    3300004: Poignee_1_12
+    3300006: Poignee_216_11
+    3300008: Poignee_516_9
+    3300010: drawer_bottom
+    3300012: drawer_container
+    3300014: drawer_middle
+    3300016: drawer_top_left
+    3300018: drawer_top_right
+    4300000: Poignee_216_11
+    4300002: Poignee_14
+    4300004: Corps_20
+    4300006: Poignee_1_12
+    4300008: Poignee_516_9
+    4300010: drawer_middle
+    4300012: drawer_top_left
+    4300014: drawer_container
+    4300016: drawer_top_right
+    4300018: drawer_bottom
+  materials:
+    importMaterials: 1
+    materialName: 0
+    materialSearch: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    importBlendShapes: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 1
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    rootMotionBoneRotation: {x: 0, y: 0, z: 0, w: 1}
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 0
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

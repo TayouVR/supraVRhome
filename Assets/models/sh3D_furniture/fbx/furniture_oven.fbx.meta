@@ -1,0 +1,194 @@
+fileFormatVersion: 2
+guid: e49b6623e007e244eaef0486f0d5d0eb
+timeCreated: 1530359977
+licenseType: Free
+ModelImporter:
+  serializedVersion: 19
+  fileIDToRecycleName:
+    100000: Corps68_48
+    100002: Corps_47
+    100004: Feu32_59
+    100006: Feu_132_57
+    100008: Feu_1_56
+    100010: Feu_3_Tube_5_116_54
+    100012: Feu_3_Tube_5_1_53
+    100014: Feu_4_Tube_516_50
+    100016: Feu_4_Tube_5_49
+    100018: Feu_58
+    100020: //RootNode
+    100022: Panneau_55
+    100024: Porte_60
+    100026: Reglage2_52
+    100028: Reglage_12_46
+    100030: Reglage_1_45
+    100032: Reglage_22_44
+    100034: Reglage_2_43
+    100036: Reglage_32_42
+    100038: Reglage_3_41
+    100040: Reglage_42_40
+    100042: Reglage_4_39
+    100044: Reglage_51
+    100046: Vitre_61
+    400000: Corps68_48
+    400002: Corps_47
+    400004: Feu32_59
+    400006: Feu_132_57
+    400008: Feu_1_56
+    400010: Feu_3_Tube_5_116_54
+    400012: Feu_3_Tube_5_1_53
+    400014: Feu_4_Tube_516_50
+    400016: Feu_4_Tube_5_49
+    400018: Feu_58
+    400020: //RootNode
+    400022: Panneau_55
+    400024: Porte_60
+    400026: Reglage2_52
+    400028: Reglage_12_46
+    400030: Reglage_1_45
+    400032: Reglage_22_44
+    400034: Reglage_2_43
+    400036: Reglage_32_42
+    400038: Reglage_3_41
+    400040: Reglage_42_40
+    400042: Reglage_4_39
+    400044: Reglage_51
+    400046: Vitre_61
+    2300000: Corps68_48
+    2300002: Corps_47
+    2300004: Feu32_59
+    2300006: Feu_132_57
+    2300008: Feu_1_56
+    2300010: Feu_3_Tube_5_116_54
+    2300012: Feu_3_Tube_5_1_53
+    2300014: Feu_4_Tube_516_50
+    2300016: Feu_4_Tube_5_49
+    2300018: Feu_58
+    2300020: Panneau_55
+    2300022: Porte_60
+    2300024: Reglage2_52
+    2300026: Reglage_12_46
+    2300028: Reglage_1_45
+    2300030: Reglage_22_44
+    2300032: Reglage_2_43
+    2300034: Reglage_32_42
+    2300036: Reglage_3_41
+    2300038: Reglage_42_40
+    2300040: Reglage_4_39
+    2300042: Reglage_51
+    2300044: Vitre_61
+    3300000: Corps68_48
+    3300002: Corps_47
+    3300004: Feu32_59
+    3300006: Feu_132_57
+    3300008: Feu_1_56
+    3300010: Feu_3_Tube_5_116_54
+    3300012: Feu_3_Tube_5_1_53
+    3300014: Feu_4_Tube_516_50
+    3300016: Feu_4_Tube_5_49
+    3300018: Feu_58
+    3300020: Panneau_55
+    3300022: Porte_60
+    3300024: Reglage2_52
+    3300026: Reglage_12_46
+    3300028: Reglage_1_45
+    3300030: Reglage_22_44
+    3300032: Reglage_2_43
+    3300034: Reglage_32_42
+    3300036: Reglage_3_41
+    3300038: Reglage_42_40
+    3300040: Reglage_4_39
+    3300042: Reglage_51
+    3300044: Vitre_61
+    4300000: Feu_4_Tube_5_49
+    4300002: Reglage_12_46
+    4300004: Feu_58
+    4300006: Vitre_61
+    4300008: Reglage2_52
+    4300010: Feu_1_56
+    4300012: Reglage_4_39
+    4300014: Reglage_2_43
+    4300016: Reglage_51
+    4300018: Feu_132_57
+    4300020: Reglage_22_44
+    4300022: Panneau_55
+    4300024: Feu_4_Tube_516_50
+    4300026: Feu_3_Tube_5_116_54
+    4300028: Corps68_48
+    4300030: Reglage_3_41
+    4300032: Reglage_1_45
+    4300034: Feu_3_Tube_5_1_53
+    4300036: Reglage_32_42
+    4300038: Feu32_59
+    4300040: Corps_47
+    4300042: Reglage_42_40
+    4300044: Porte_60
+  materials:
+    importMaterials: 1
+    materialName: 0
+    materialSearch: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    importBlendShapes: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 1
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    rootMotionBoneRotation: {x: 0, y: 0, z: 0, w: 1}
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 0
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

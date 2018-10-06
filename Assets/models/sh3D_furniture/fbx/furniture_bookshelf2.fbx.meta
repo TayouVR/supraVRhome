@@ -1,0 +1,137 @@
+fileFormatVersion: 2
+guid: 3e79139a001aaa047bc675f1d974e104
+timeCreated: 1530358295
+licenseType: Free
+ModelImporter:
+  serializedVersion: 19
+  fileIDToRecycleName:
+    100000: Etagere_157
+    100002: Etagere_1_156
+    100004: Etagere_2_160
+    100006: Etagere_3_155
+    100008: Etagere_4_158
+    100010: Etagere_5_165
+    100012: Etagere_6_159
+    100014: Etagere_7_163
+    100016: Etagere_8_161
+    100018: //RootNode
+    100020: Montant_162
+    100022: Montant_1_164
+    400000: Etagere_157
+    400002: Etagere_1_156
+    400004: Etagere_2_160
+    400006: Etagere_3_155
+    400008: Etagere_4_158
+    400010: Etagere_5_165
+    400012: Etagere_6_159
+    400014: Etagere_7_163
+    400016: Etagere_8_161
+    400018: //RootNode
+    400020: Montant_162
+    400022: Montant_1_164
+    2300000: Etagere_157
+    2300002: Etagere_1_156
+    2300004: Etagere_2_160
+    2300006: Etagere_3_155
+    2300008: Etagere_4_158
+    2300010: Etagere_5_165
+    2300012: Etagere_6_159
+    2300014: Etagere_7_163
+    2300016: Etagere_8_161
+    2300018: Montant_162
+    2300020: Montant_1_164
+    2300022: //RootNode
+    3300000: Etagere_157
+    3300002: Etagere_1_156
+    3300004: Etagere_2_160
+    3300006: Etagere_3_155
+    3300008: Etagere_4_158
+    3300010: Etagere_5_165
+    3300012: Etagere_6_159
+    3300014: Etagere_7_163
+    3300016: Etagere_8_161
+    3300018: Montant_162
+    3300020: Montant_1_164
+    3300022: //RootNode
+    4300000: Montant_162
+    4300002: Etagere_4_158
+    4300004: Etagere_7_163
+    4300006: Etagere_3_155
+    4300008: Etagere_5_165
+    4300010: Montant_1_164
+    4300012: Etagere_8_161
+    4300014: Etagere_1_156
+    4300016: Etagere_2_160
+    4300018: Etagere_6_159
+    4300020: Etagere_157
+    4300022: bookshelf1
+  materials:
+    importMaterials: 1
+    materialName: 0
+    materialSearch: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    importBlendShapes: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 1
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    rootMotionBoneRotation: {x: 0, y: 0, z: 0, w: 1}
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 0
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
