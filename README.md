@@ -3,6 +3,10 @@ VRChat world containing a house at the shore
 
 ...
 
+### because of git costantly forcing me to use git LFS I stopped using github for this project - I will no longer upload any changes until I get the git LFS errors away.
+
+
+
 This world should have a giant city, a modern hyperloop and overall a very modern enviroment.
 Right now it just has a house in a mountain, with very few furniture, and poor lighting.
 
