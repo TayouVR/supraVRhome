@@ -1,13 +1,22 @@
-﻿using System.Linq;
+﻿﻿#define SUPPORT_DEPRECATED_ONSP
+ 
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Reflection;
+using UnityEngine.Profiling;
 
-namespace VRCSDK2
+ namespace VRCSDK2.Validation
 {
     public static class AvatarValidation
     {
+        private const int ENFORCE_AUDIO_SOURCE_GAMEOBJECTS_PER_FRAME = 50;
+        private const int ENFORCE_STATIONS_GAMEOBJECTS_PER_FRAME = 50;
+
+        private const int MAX_STATIONS_PER_AVATAR = 6;
+        private const float MAX_STATION_ACTIVATE_DISTANCE = 0f;
+        private const float MAX_STATION_LOCATION_DISTANCE = 2f;
+        private const float MAX_STATION_COLLIDER_DIMENSION = 2f;
+
         public static readonly string[] ComponentTypeWhiteList = new string[] {
             "UnityEngine.Transform",
             "UnityEngine.Animator",
@@ -49,19 +58,28 @@ namespace VRCSDK2
             "UnityEngine.Animation",
             "UnityEngine.ParticleSystem",
             "UnityEngine.ParticleSystemRenderer",
+#if UNITY_STANDALONE
             "DynamicBone",
             "DynamicBoneCollider",
+#endif
             "UnityEngine.TrailRenderer",
+#if UNITY_STANDALONE
             "UnityEngine.Cloth",
             "UnityEngine.Light",
-            "UnityEngine.Collider",
+            "UnityEngine.BoxCollider",
+            "UnityEngine.SphereCollider",
+            "UnityEngine.CapsuleCollider",
             "UnityEngine.Rigidbody",
             "UnityEngine.Joint",
             "UnityEngine.Camera",
+#endif
             "UnityEngine.FlareLayer",
             "UnityEngine.GUILayer",
+#if UNITY_STANDALONE
             "UnityEngine.AudioSource",
             "ONSPAudioSource",
+            "VRCSDK2.VRC_SpatialAudioSource",
+#endif
             "AvatarCustomAudioLimiter",
             "UnityEngine.EllipsoidParticleEmitter",
             "UnityEngine.ParticleRenderer",
@@ -71,7 +89,24 @@ namespace VRCSDK2
             "VRCSDK2.VRC_IKFollower",
             "VRC_IKFollowerInternal",
             "RealisticEyeMovements.EyeAndHeadAnimator",
-            "AvatarAudioSourceFilter"
+            "RealisticEyeMovements.LookTargetController",
+            "AvatarAudioSourceFilter",
+            "VRCSDK2.VRC_Station",
+            "VRC_StationInternal",
+            "VRC.AvatarPerformanceComponentSettings",
+        };
+
+        public static readonly string[] ShaderWhiteList = new string[]
+        {
+            "VRChat/Mobile/Standard Lite",
+            "VRChat/Mobile/Diffuse",
+            "VRChat/Mobile/Bumped Diffuse",
+            "VRChat/Mobile/Bumped Mapped Specular",
+            "VRChat/Mobile/Toon Lit",
+            "VRChat/Mobile/MatCap Lit",
+
+            "VRChat/Mobile/Particles/Additive",
+            "VRChat/Mobile/Particles/Multiply",
         };
 
         public static bool ps_limiter_enabled = false;
@@ -85,174 +120,184 @@ namespace VRCSDK2
         public static int ps_collision_penalty_med = 60;
         public static int ps_collision_penalty_low = 10;
         public static int ps_trails_penalty = 10;
-        
-        public static IEnumerable<Component> FindIllegalComponents(string Name, GameObject currentAvatar)
+        public static int ps_max_particle_force = 0; // can not be disabled
+
+        private static int _enforceAudioSourcesFrameNumber = 0;
+        private static int _enforceAudioSourcesProcessedThisFrame = 0;
+
+        private static int _enforceAvatarStationsFrameNumber = 0;
+        private static int _enforceAvatarStationsProcessedThisFrame = 0;
+
+        public static IEnumerator RemoveIllegalComponentsEnumerator(GameObject target, bool retry = true)
         {
-            List<Component> bad = new List<Component>();
-            IEnumerator seeker = FindIllegalComponentsEnumerator(Name, currentAvatar, (c) => bad.Add(c));
-            while (seeker.MoveNext()) ;
-            return bad;
+            return ValidationUtils.RemoveIllegalComponentsEnumerator(target, ValidationUtils.WhitelistedTypes("avatar", ComponentTypeWhiteList), retry);
         }
 
-        public static void RemoveIllegalComponents(string Name, GameObject currentAvatar, bool retry = true)
+        public static IEnumerable<Component> FindIllegalComponents(GameObject target)
         {
-            IEnumerator remover = RemoveIllegalComponentsEnumerator(Name, currentAvatar, retry);
-            while (remover.MoveNext()) ;
-        }
-
-        public static IEnumerator RemoveIllegalComponentsEnumerator(string Name, GameObject currentAvatar, bool retry = true)
-        {
-            bool foundBad = false;
-            yield return VRCSDK2.AvatarValidation.FindIllegalComponentsEnumerator(Name, currentAvatar, (c) => {
-                if (c != null)
-                {
-                    Debug.LogWarningFormat("Removed component of type {0}", c.GetType().Name);
-                    RemoveDependancies(c);
-
-#if VRC_CLIENT
-                    Object.DestroyImmediate(c, true);
-#else
-                    Object.DestroyImmediate(c, false);
-#endif
-                    foundBad = true;
-                }
-            });
-
-            if (retry && foundBad)
-                yield return RemoveIllegalComponentsEnumerator(Name, currentAvatar, false);
+            return ValidationUtils.FindIllegalComponents(target, ValidationUtils.WhitelistedTypes("avatar", ComponentTypeWhiteList));
         }
 
         public static List<AudioSource> EnforceAudioSourceLimits(GameObject currentAvatar)
         {
             List<AudioSource> found = new List<AudioSource>();
             IEnumerator enforcer = EnforceAudioSourceLimitsEnumerator(currentAvatar, (a) => found.Add(a));
-            while (enforcer.MoveNext()) ;
+            while (enforcer.MoveNext())
+            {
+                _enforceAudioSourcesProcessedThisFrame = 0;
+            }
+
             return found;
         }
 
         public static IEnumerator EnforceAudioSourceLimitsEnumerator(GameObject currentAvatar, System.Action<AudioSource> onFound)
         {
             if (currentAvatar == null)
+            {
                 yield break;
+            }
 
             Queue<GameObject> children = new Queue<GameObject>();
-            children.Enqueue(currentAvatar.gameObject);
+            if (currentAvatar != null)
+            {
+                children.Enqueue(currentAvatar.gameObject);
+            }
+
             while (children.Count > 0)
             {
+                if(Time.frameCount > _enforceAudioSourcesFrameNumber)
+                {
+                    _enforceAudioSourcesFrameNumber = Time.frameCount;
+                    _enforceAudioSourcesProcessedThisFrame = 0;
+                }
+
+                if(_enforceAudioSourcesProcessedThisFrame > ENFORCE_AUDIO_SOURCE_GAMEOBJECTS_PER_FRAME)
+                {
+                    yield return null;
+                }
+
+                Profiler.BeginSample("EnforceAudioSourceLimitsEnumerator");
+                _enforceAudioSourcesProcessedThisFrame++;
+
                 GameObject child = children.Dequeue();
                 if (child == null)
+                {
+                    Profiler.EndSample();
                     continue;
+                }
 
                 int childCount = child.transform.childCount;
-                for (int idx = 0; idx < child.transform.childCount; ++idx)
+                for (int idx = 0; idx < childCount; ++idx)
+                {
                     children.Enqueue(child.transform.GetChild(idx).gameObject);
+                }
 
-#if VRC_CLIENT
+                #if VRC_CLIENT
                 if (child.GetComponent<USpeaker>() != null)
+                {
+                    Profiler.EndSample();
                     continue;
-#endif
+                }
+                #endif
 
                 AudioSource[] sources = child.transform.GetComponents<AudioSource>();
                 if (sources != null && sources.Length > 0)
                 {
-                    AudioSource au = sources[0];
-                    if (au == null)
-                        continue;
-
-#if VRC_CLIENT
-                    au.outputAudioMixerGroup = VRCAudioManager.GetAvatarGroup();
-#endif
-
-                    if (au.volume > 0.9f)
-                        au.volume = 0.9f;
-
-#if VRC_CLIENT
-                    // someone mucked with the sdk forced settings, shame on them!
-                    if (au.spatialize == false)
-                        au.volume = 0;
-#else
-                    au.spatialize = true;
-#endif
-                    au.priority = Mathf.Clamp(au.priority, 200, 255);
-                    au.bypassEffects = false;
-                    au.bypassListenerEffects = false;
-                    au.spatialBlend = 1f;
-                    au.spread = 0;
-
-                    au.minDistance = Mathf.Clamp(au.minDistance, 0, 2);
-                    au.maxDistance = Mathf.Clamp(au.maxDistance, 0, 30);
-
-                    float range = au.maxDistance - au.minDistance;
-                    float min = au.minDistance;
-                    float max = au.maxDistance;
-                    float mult = 50.0f/range;
-
-                    // setup a custom rolloff curve
-                    Keyframe[] keys = new Keyframe[7];
-                    keys[0] = new Keyframe(0, 1);
-                    keys[1] = new Keyframe(min, 1, 0, -0.4f * mult);
-                    keys[2] = new Keyframe(min + 0.022f * range, 0.668f, -0.2f * mult, -0.2f * mult);
-                    keys[3] = new Keyframe(min + 0.078f * range, 0.359f, -0.05f * mult, -0.05f * mult);
-                    keys[4] = new Keyframe(min + 0.292f * range, 0.102f, -0.01f * mult, -0.01f * mult);
-                    keys[5] = new Keyframe(min + 0.625f * range, 0.025f, -0.002f * mult, -0.002f * mult);
-                    keys[6] = new Keyframe(max, 0);
-                    AnimationCurve curve = new AnimationCurve(keys);
-
-                    au.rolloffMode = AudioRolloffMode.Custom;
-                    au.SetCustomCurve(AudioSourceCurveType.CustomRolloff, curve);
-
-                    // if we have an onsp component, also configure that
-                    ONSPAudioSource oa = au.GetComponent<ONSPAudioSource>();
-                    if (oa)
+                    AudioSource audioSource = sources[0];
+                    if (audioSource == null)
                     {
-                        if (oa.Gain > 10f) oa.Gain = 10f;
-#if VRC_CLIENT
-                        // someone mucked with the sdk forced settings, shame on them!
-                        if (oa.enabled == false || oa.EnableSpatialization == false)
-                        {
-                            oa.Gain = 0f;
-                            au.volume = 0f;
-                        }
-#else
-                        oa.enabled = true;
-                        oa.EnableSpatialization = true;
-#endif
-                        oa.UseInvSqr = true; // This is the ENABLED value for OCULUS ATTENUATION
-                        oa.EnableRfl = false;
-                        if (oa.Near > 2f) oa.Near = 2f;
-                        if (oa.Far > 30f) oa.Far = 30f;
-                        oa.VolumetricRadius = 0f;
+                        Profiler.EndSample();
+                        continue;
                     }
+                    
 
-                    onFound(au);
+                    #if VRC_CLIENT
+                    audioSource.outputAudioMixerGroup = VRCAudioManager.GetAvatarGroup();
+                    audioSource.priority = Mathf.Clamp(audioSource.priority, 200, 255);
+                    #else
+                    VRC_SpatialAudioSource vrcSpatialAudioSource = audioSource.gameObject.GetComponent<VRC_SpatialAudioSource>();
+
+                    // these are SDK only, we rely on AvatarAudioSourceLimiter to enforce
+                    // values at runtime
+
+                    #if SUPPORT_DEPRECATED_ONSP
+                    ONSPAudioSource[] allOnsp = audioSource.gameObject.GetComponents<ONSPAudioSource>();
+                    if (allOnsp != null && allOnsp.Length > 0)
+                    {
+                        ONSPAudioSource onsp = allOnsp[0];
+                        if (vrcSpatialAudioSource == null)
+                        {
+                            vrcSpatialAudioSource = audioSource.gameObject.AddComponent<VRC_SpatialAudioSource>();
+                        }
+
+                        vrcSpatialAudioSource.Gain = Mathf.Min(onsp.Gain, VRCSDK2.AudioManagerSettings.AvatarAudioMaxGain);
+                        vrcSpatialAudioSource.Far = Mathf.Min(onsp.Far, VRCSDK2.AudioManagerSettings.AvatarAudioMaxRange);
+                        vrcSpatialAudioSource.VolumetricRadius = Mathf.Min(onsp.Far, VRCSDK2.AudioManagerSettings.AvatarAudioMaxRange);
+                        vrcSpatialAudioSource.Near = Mathf.Min(onsp.Near, onsp.Far);
+                        vrcSpatialAudioSource.EnableSpatialization = onsp.EnableSpatialization;
+                        vrcSpatialAudioSource.UseAudioSourceVolumeCurve = !onsp.UseInvSqr;
+
+                        Debug.LogWarningFormat("ONSPAudioSource found on {0}. converted to VRC_SpatialAudioSource.", child.name);
+                        foreach (var o in allOnsp)
+                        {
+                            Object.DestroyImmediate(o, true);
+                        }
+                    }
+                    #endif
+                    if (vrcSpatialAudioSource == null)
+                    {
+                        // user has not yet added VRC_SpatialAudioSource (or ONSP)
+                        // so set up some defaults
+                        vrcSpatialAudioSource = audioSource.gameObject.AddComponent<VRC_SpatialAudioSource>();
+                        vrcSpatialAudioSource.Gain = AudioManagerSettings.AvatarAudioMaxGain;
+                        vrcSpatialAudioSource.Far = AudioManagerSettings.AvatarAudioMaxRange;
+                        vrcSpatialAudioSource.Near = 0f;
+                        vrcSpatialAudioSource.VolumetricRadius = 0f;
+                        vrcSpatialAudioSource.EnableSpatialization = true;
+                        vrcSpatialAudioSource.enabled = true;
+                        audioSource.spatialize = true;
+                        audioSource.priority = Mathf.Clamp(audioSource.priority, 200, 255);
+                        audioSource.bypassEffects = false;
+                        audioSource.bypassListenerEffects = false;
+                        audioSource.spatialBlend = 1f;
+                        audioSource.spread = 0;
+
+                        // user is allowed to change, but for now put a safe default
+                        audioSource.maxDistance = AudioManagerSettings.AvatarAudioMaxRange;
+                        audioSource.minDistance = audioSource.maxDistance/500f;
+                        audioSource.rolloffMode = AudioRolloffMode.Logarithmic;
+                    }
+                    #endif //!VRC_CLIENT
+
+                    onFound(audioSource);
 
                     if (sources.Length > 1)
                     {
-                        Debug.LogError("Disabling extra AudioSources on GameObject("+ child.name +"). Only one is allowed per GameObject.");
-                        for (int i=1; i<sources.Length; i++)
+                        Debug.LogError("Disabling extra AudioSources on GameObject(" + child.name + "). Only one is allowed per GameObject.");
+                        for (int i = 1; i < sources.Length; i++)
                         {
                             if (sources[i] == null)
+                            {
+                                Profiler.EndSample();
                                 continue;
+                            }
 
-#if VRC_CLIENT
+                            #if VRC_CLIENT
                             sources[i].enabled = false;
                             sources[i].clip = null;
-#else
-                            Object.DestroyImmediate(sources[i]);
-#endif
+                            #else
+                            ValidationUtils.RemoveComponent(sources[i]);
+                            #endif //!VRC_CLIENT
                         }
                     }
                 }
 
-                yield return null;
+                Profiler.EndSample();
             }
         }
 
         public static void EnforceRealtimeParticleSystemLimits(Dictionary<ParticleSystem, int> particleSystems, bool includeDisabled = false, bool stopSystems = true)
         {
-            if (!ps_limiter_enabled)
-                return;
-
             float totalEmission = 0;
             ParticleSystem ps = null;
             int max = 0;
@@ -263,35 +308,46 @@ namespace VRCSDK2
 
             foreach (KeyValuePair<ParticleSystem, int> kp in particleSystems)
             {
+                if (kp.Key == null)
+                    continue;
+
                 if (!kp.Key.isPlaying && !includeDisabled)
                     continue;
+
                 ps = kp.Key;
                 max = kp.Value;
                 em_penalty = 1;
                 if (ps.collision.enabled)
                 {
-                    switch (ps.collision.quality)
+                    // particle force is always restricted (not dependent on ps_limiter_enabled)
+                    var restrictedCollision = ps.collision;
+                    restrictedCollision.colliderForce = ps_max_particle_force;
+
+                    if (ps_limiter_enabled)
                     {
-                        case ParticleSystemCollisionQuality.High:
-                            max = max / ps_collision_penalty_high;
-                            em_penalty += 3;
-                            break;
-                        case ParticleSystemCollisionQuality.Medium:
-                            max = max / ps_collision_penalty_med;
-                            em_penalty += 2;
-                            break;
-                        case ParticleSystemCollisionQuality.Low:
-                            max = max / ps_collision_penalty_low;
-                            em_penalty += 2;
-                            break;
+                        switch (ps.collision.quality)
+                        {
+                            case ParticleSystemCollisionQuality.High:
+                                max = max / ps_collision_penalty_high;
+                                em_penalty += 3;
+                                break;
+                            case ParticleSystemCollisionQuality.Medium:
+                                max = max / ps_collision_penalty_med;
+                                em_penalty += 2;
+                                break;
+                            case ParticleSystemCollisionQuality.Low:
+                                max = max / ps_collision_penalty_low;
+                                em_penalty += 2;
+                                break;
+                        }
                     }
                 }
-                if (ps.trails.enabled)
+                if (ps_limiter_enabled && ps.trails.enabled)
                 {
                     max = max / ps_trails_penalty;
                     em_penalty += 3;
                 }
-                if (ps.emission.enabled)
+                if (ps_limiter_enabled && ps.emission.enabled)
                 {
                     em = ps.emission;
                     emission = 0;
@@ -312,18 +368,161 @@ namespace VRCSDK2
                     totalEmission += emission;
                     if ((emission > ps_max_emission || totalEmission > ps_max_total_emission) && stopSystems)
                     {
-                        kp.Key.Stop();
+                        kp.Key.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
                         // Debug.LogWarning("Particle system named " + kp.Key.gameObject.name + " breached particle emission limits, it has been stopped");
                     }
                 }
-                if (ps.main.maxParticles > Mathf.Clamp(max, 1, kp.Value))
+                if (ps_limiter_enabled && ps.main.maxParticles > Mathf.Clamp(max, 1, kp.Value))
                 {
                     ParticleSystem.MainModule psm = ps.main;
                     psm.maxParticles = Mathf.Clamp(psm.maxParticles, 1, max);
                     if (stopSystems)
-                        kp.Key.Stop();
+                        kp.Key.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
                     Debug.LogWarning("Particle system named " + kp.Key.gameObject.name + " breached particle limits, it has been limited");
                 }
+            }
+        }
+
+        public static List<VRC_Station> EnforceAvatarStationLimits(GameObject currentAvatar)
+        {
+            List<VRC_Station> found = new List<VRC_Station>();
+            IEnumerator enforcer = EnforceAvatarStationLimitsEnumerator(currentAvatar, (a) => found.Add(a));
+            while (enforcer.MoveNext())
+            {
+                _enforceAvatarStationsProcessedThisFrame = 0;
+            }
+
+            return found;
+        }
+
+        public static IEnumerator EnforceAvatarStationLimitsEnumerator(GameObject currentAvatar, System.Action<VRC_Station> onFound)
+        {
+            Queue<GameObject> children = new Queue<GameObject>();
+            children.Enqueue(currentAvatar.gameObject);
+
+            int stationCount = 0;
+            uint objectsProcessedThisFrame = 0;
+            while (children.Count > 0)
+            {
+                if(Time.frameCount > _enforceAvatarStationsFrameNumber)
+                {
+                    _enforceAvatarStationsFrameNumber = Time.frameCount;
+                    _enforceAvatarStationsProcessedThisFrame = 0;
+                }
+
+                if(_enforceAvatarStationsProcessedThisFrame > ENFORCE_STATIONS_GAMEOBJECTS_PER_FRAME)
+                {
+                    yield return null;
+                }
+
+                Profiler.BeginSample("EnforceAvatarStationLimitsEnumerator");
+                _enforceAvatarStationsProcessedThisFrame++;
+
+                GameObject child = children.Dequeue();
+                if (child == null)
+                {
+                    Profiler.EndSample();
+                    continue;
+                }
+
+                int childCount = child.transform.childCount;
+                for (int idx = 0; idx < childCount; ++idx)
+                {
+                    children.Enqueue(child.transform.GetChild(idx).gameObject);
+                }
+
+                VRC_Station[] stations = child.transform.GetComponents<VRC_Station>();
+                if (stations != null && stations.Length > 0)
+                {
+                    foreach(VRC_Station station in stations)
+                    {
+                        if (station == null)
+                        {
+                            Profiler.EndSample();
+                            continue;
+                        }
+
+                        #if VRC_CLIENT
+                        VRC_StationInternal stationInternal = station.transform.GetComponent<VRC_StationInternal>();
+                        #endif
+                        if (stationCount < MAX_STATIONS_PER_AVATAR)
+                        {
+                            bool markedForDestruction = false;
+                            // keep this station, but limit it
+                            if (station.disableStationExit)
+                            {
+                                Debug.LogError("[" + currentAvatar.name + "]==> Stations on avatars cannot disable station exit. Re-enabled.");
+                                station.disableStationExit = false;
+                            }
+
+                            if (station.stationEnterPlayerLocation != null)
+                            {
+                                if (Vector3.Distance(station.stationEnterPlayerLocation.position, station.transform.position) > MAX_STATION_LOCATION_DISTANCE)
+                                {
+                                    #if VRC_CLIENT
+                                    markedForDestruction = true;
+                                    Debug.LogError("[" + currentAvatar.name + "]==> Station enter location is too far from station (max dist=" + MAX_STATION_LOCATION_DISTANCE + "). Station disabled.");
+                                    #else
+                                    Debug.LogError("Station enter location is too far from station (max dist="+MAX_STATION_LOCATION_DISTANCE+"). Station will be disabled at runtime.");
+                                    #endif
+                                }
+                                if (Vector3.Distance(station.stationExitPlayerLocation.position, station.transform.position) > MAX_STATION_LOCATION_DISTANCE)
+                                {
+                                    #if VRC_CLIENT
+                                    markedForDestruction = true;
+                                    Debug.LogError("[" + currentAvatar.name + "]==> Station exit location is too far from station (max dist=" + MAX_STATION_LOCATION_DISTANCE + "). Station disabled.");
+                                    #else
+                                    Debug.LogError("Station exit location is too far from station (max dist="+MAX_STATION_LOCATION_DISTANCE+"). Station will be disabled at runtime.");
+                                    #endif
+                                }
+
+                                if (markedForDestruction)
+                                {
+                                    #if VRC_CLIENT
+                                    ValidationUtils.RemoveComponent(station);
+                                    if (stationInternal != null)
+                                    {
+                                        ValidationUtils.RemoveComponent(stationInternal);
+                                    }
+                                    #endif
+                                }
+                                else
+                                {
+                                    if (onFound != null)
+                                    {
+                                        onFound(station);
+                                    }
+                                }
+
+                            }
+                        }
+                        else
+                        {
+                            #if VRC_CLIENT
+                            Debug.LogError("[" + currentAvatar.name + "]==> Removing station over limit of " + MAX_STATIONS_PER_AVATAR);
+                            ValidationUtils.RemoveComponent(station);
+                            if (stationInternal != null)
+                            {
+                                ValidationUtils.RemoveComponent(stationInternal);
+                            }
+
+                            #else
+                            Debug.LogError("Too many stations on avatar("+ currentAvatar.name +"). Maximum allowed="+MAX_STATIONS_PER_AVATAR+". Extra stations will be removed at runtime.");
+                            #endif
+                        }
+
+                        stationCount++;
+                    }
+                }
+                Profiler.EndSample();
+
+                if(objectsProcessedThisFrame < ENFORCE_STATIONS_GAMEOBJECTS_PER_FRAME)
+                {
+                    continue;
+                }
+
+                objectsProcessedThisFrame = 0;
+                yield return null;
             }
         }
 
@@ -344,14 +543,41 @@ namespace VRCSDK2
                     }
                     else
                     {
-                        RemoveDependancies(camera);
 
                         camera.enabled = false;
                         if (camera.targetTexture != null)
                             camera.targetTexture = new RenderTexture(16, 16, 24);
-                        MonoBehaviour.DestroyImmediate(camera);
+                        ValidationUtils.RemoveComponent(camera);
                     }
                 }
+            }
+        }
+
+        public static void StripAnimations(GameObject currentAvatar)
+        {
+            foreach (Animator anim in currentAvatar.GetComponentsInChildren<Animator>(true))
+            {
+                if (anim == null)
+                    continue;
+                StripRuntimeAnimatorController(anim.runtimeAnimatorController);
+            }
+            foreach (VRC_Station station in currentAvatar.GetComponentsInChildren<VRC_Station>(true))
+            {
+                if (station == null)
+                    continue;
+                StripRuntimeAnimatorController(station.animatorController);
+            }
+        }
+
+        private static void StripRuntimeAnimatorController(RuntimeAnimatorController rc)
+        {
+            if (rc == null || rc.animationClips == null)
+                return;
+            foreach (AnimationClip clip in rc.animationClips)
+            {
+                if (clip == null)
+                    continue;
+                clip.events = null;
             }
         }
 
@@ -388,229 +614,138 @@ namespace VRCSDK2
 
                     Debug.LogWarning("Removing Animator comp from " + anim.gameObject.name);
 
-                    RemoveDependancies(anim);
-
                     anim.enabled = false;
-                    MonoBehaviour.DestroyImmediate(anim);
-                } 
-            }
-
-            // remove legacy Animation comps
-            {
-                foreach (Animation anim in currentAvatar.GetComponentsInChildren<Animation>(true))
-                {
-                    if (anim == null || anim.gameObject == null)
-                        continue;
-
-                    Debug.LogWarning("Removing Animation comp from " + anim.gameObject.name);
-
-                    RemoveDependancies(anim);
-
-                    anim.enabled = false;
-                    MonoBehaviour.DestroyImmediate(anim);
+                    ValidationUtils.RemoveComponent(anim);
                 }
             }
+
+            ValidationUtils.RemoveComponentsOfType<Animation>(currentAvatar);
         }
 
-        public static void RemoveLightComponents(GameObject currentAvatar)
-        {
-            if (currentAvatar == null)
-                return;
-
-            foreach (Light light in currentAvatar.GetComponentsInChildren<Light>(true))
-            {
-                if (light == null || light.gameObject == null)
-                    continue;
-
-                Debug.LogWarning("Removing Light comp from " + light.gameObject.name);
-
-                RemoveDependancies(light);
-
-                light.enabled = false;
-                MonoBehaviour.DestroyImmediate(light);
-            }
-        }
-
-        public static void RemoveLineRendererComponents(GameObject currentAvatar)
-        {
-            if (currentAvatar == null)
-                return;
-
-            foreach (var comp in currentAvatar.GetComponentsInChildren<LineRenderer>(true))
-            {
-                if (comp == null || comp.gameObject == null)
-                    continue;
-
-                Debug.LogWarning("Removing LineRenderer comp from " + comp.gameObject.name);
-
-                RemoveDependancies(comp);
-
-                comp.enabled = false;
-                MonoBehaviour.DestroyImmediate(comp);
-            }
-        }
-
-        public static void RemoveTrailRendererComponents(GameObject currentAvatar) 
-        {
-            if (currentAvatar == null)
-                return;
-
-            foreach (var comp in currentAvatar.GetComponentsInChildren<TrailRenderer>(true))
-            {
-                if (comp == null || comp.gameObject == null)
-                    continue;
-
-                Debug.LogWarning("Removing TrailRenderer comp from " + comp.gameObject.name);
-
-                RemoveDependancies(comp);
-
-                comp.enabled = false;
-                MonoBehaviour.DestroyImmediate(comp);
-            }
-        }
-
-
-        static Color32 GetTrustLevelColor(VRC.Core.APIUser user)
+        private static Color32 GetTrustLevelColor(VRC.Core.APIUser user)
         {
 #if VRC_CLIENT
             Color32 color = new Color32(255,255,255,255);
-            if (user==null) return color;
+            if (user==null)
+            {
+                return color;
+            }
 
             if (user == VRC.Core.APIUser.CurrentUser)
             {
-                color = VRCInputManager.showSocialRank ? VRCPlayer.Instance.GetColorForSocialRank(user) : VRCPlayer.Instance.GetDefaultNameplateColor(user, user.hasVIPAccess);
+                color = VRCInputManager.showSocialRank ? VRCPlayer.GetColorForSocialRank(user) : VRCPlayer.GetDefaultNameplateColor(user, user.hasVIPAccess);
             }
             else
             {
-                VRC.Player player = VRC.PlayerManager.GetPlayer(user.id);
-                VRCPlayer vrcPlayer = (null!= player) ? player.vrcPlayer : null;
-                if (vrcPlayer!=null)
-                {
-                    color = vrcPlayer.ShouldShowSocialRank() ? vrcPlayer.GetColorForSocialRank(user) : vrcPlayer.GetDefaultNameplateColor(user, user.hasVIPAccess);
-                }
-                else
-                {
-                    color = VRCPlayer.Instance.GetDefaultNameplateColor(user, user.hasVIPAccess);
-                }
+                color = VRCPlayer.ShouldShowSocialRank(user) ? VRCPlayer.GetColorForSocialRank(user) : VRCPlayer.GetDefaultNameplateColor(user, user.hasVIPAccess);
             }
             return color;
 #else
             // we are in sdk, this is not meaningful anyway
             return (Color32)Color.grey;
 #endif
-		}
+        }
 
-        static Material CreateFallbackMaterial(Material mtl, VRC.Core.APIUser user)
+        private static Material CreateFallbackMaterial(Material originalMaterial, VRC.Core.APIUser user)
         {
 #if VRC_CLIENT
-            Material newMtl;
-            Color trustCol = (Color)GetTrustLevelColor(user);
+            Material fallbackMaterial;
+            Color trustCol = user != null ? (Color)GetTrustLevelColor(user) : Color.white;
+            string displayName = user != null ? user.displayName : "localUser";
 
-            if (mtl != null)
+            if (originalMaterial == null || originalMaterial.shader == null)
             {
-                var safeShader = VRC.Core.AssetManagement.GetSafeShader(mtl.shader.name);
+                fallbackMaterial = VRC.Core.AssetManagement.CreateMatCap(trustCol * 0.8f + new Color(0.2f, 0.2f, 0.2f));
+                fallbackMaterial.name = string.Format("MC_{0}_{1}", fallbackMaterial.shader.name, displayName);
+            }
+            else
+            {
+                var safeShader = VRC.Core.AssetManagement.GetSafeShader(originalMaterial.shader.name);
                 if (safeShader == null)
                 {
-                    newMtl = VRC.Core.AssetManagement.CreateSafeFallbackMaterial(mtl, trustCol * 0.8f + new Color(0.2f, 0.2f, 0.2f));
-                    newMtl.name = "FB_"+mtl.shader.name;
+                    fallbackMaterial = VRC.Core.AssetManagement.CreateSafeFallbackMaterial(originalMaterial, trustCol * 0.8f + new Color(0.2f, 0.2f, 0.2f));
+                    fallbackMaterial.name = string.Format("FB_{0}_{1}_{2}", fallbackMaterial.shader.name, displayName, originalMaterial.name);
                 }
                 else
                 {
                     //Debug.Log("<color=cyan>*** using safe internal fallback for shader:"+ safeShader.name + "</color>");
-                    newMtl = new Material(safeShader);
-                    if (safeShader.name=="Standard" || safeShader.name=="Standard (Specular setup)")
-                        VRC.Core.AssetManagement.SetupBlendMode(newMtl);
-                    newMtl.CopyPropertiesFromMaterial(mtl);
-                    newMtl.name = "INT_"+mtl.shader.name;
+                    fallbackMaterial = new Material(safeShader);
+                    if (safeShader.name == "Standard" || safeShader.name == "Standard (Specular setup)")
+                    {
+                        VRC.Core.AssetManagement.SetupBlendMode(fallbackMaterial);
+                    }
+
+                    fallbackMaterial.CopyPropertiesFromMaterial(originalMaterial);
+                    fallbackMaterial.name = string.Format("INT_{0}_{1}_{2}", fallbackMaterial.shader.name, displayName, originalMaterial.name);
                 }
             }
-            else
-            {
-                newMtl = VRC.Core.AssetManagement.CreateMatCap(trustCol * 0.8f + new Color(0.2f, 0.2f, 0.2f));
-                newMtl.name = "FB?_";
-            }
 
-            return newMtl;
+            return fallbackMaterial;
 #else
             // we are in sdk, this is not meaningful anyway
             return new Material(Shader.Find("Standard"));
 #endif
         }
 
-        public static void SetupShaderReplace(VRC.Core.APIUser user, GameObject currentAvatar, out HashSet<Renderer> avatarRenderers, out Dictionary<Material, Material> materialSwaps)
+        public static void SetupShaderReplace(VRC.Core.APIUser user, GameObject currentAvatar, HashSet<Renderer> avatarRenderers)
         {
-            materialSwaps = new Dictionary<Material, Material>();
-            avatarRenderers = new HashSet<Renderer>(currentAvatar.GetComponentsInChildren<SkinnedMeshRenderer>(true));
+            avatarRenderers.Clear();
+            avatarRenderers.UnionWith(currentAvatar.GetComponentsInChildren<SkinnedMeshRenderer>(true));
             avatarRenderers.UnionWith(currentAvatar.GetComponentsInChildren<MeshRenderer>(true));
-
-            // find any material with custom shader and add to set
-            // we don't actually replace the running shaders here
-            foreach (Renderer r in avatarRenderers)
-            {
-                for (int i = 0; i < r.sharedMaterials.Length; ++i)
-                {
-                    if (r.sharedMaterials[i] == null || r.sharedMaterials[i].shader == null)
-                        continue;
-                    Material newMtl = CreateFallbackMaterial(r.sharedMaterials[i], user);
-                    materialSwaps[newMtl] = r.sharedMaterials[i];
-                }
-            }
         }
 
-        public static void ReplaceShaders(VRC.Core.APIUser user, HashSet<Renderer> avatarRenderers, ref Dictionary<Material, Material> materialSwaps, bool debug=true)
+        public static void ReplaceShaders(VRC.Core.APIUser user, IEnumerable<Renderer> avatarRenderers, FallbackMaterialCache fallbackMaterialCache, bool debug = true)
         {
-            foreach (Renderer r in avatarRenderers)
+            foreach(Renderer avatarRenderer in avatarRenderers)
             {
-                Material[] materials = new Material[r.sharedMaterials.Length];
-                for (int i = 0; i < r.sharedMaterials.Length; ++i)
+                //TODO 2018.4 LTS: Replace this with avatarRenderer.GetSharedMaterials(List<Material> sharedMaterials);
+                if(avatarRenderer == null) continue;
+                Material[] avatarRendererSharedMaterials = avatarRenderer.sharedMaterials;
+                for(int i = 0; i < avatarRendererSharedMaterials.Length; ++i)
                 {
-                    if (r.sharedMaterials[i] == null)
-                        materials[i] = CreateFallbackMaterial(null, user);
-                    else if (materialSwaps.ContainsKey(r.sharedMaterials[i]))
+                    Material currentMaterial = avatarRendererSharedMaterials[i];
+                    if(currentMaterial == null)
+                    {
+                        continue;
+                    }
+
+                    Material fallbackMaterial;
+                    if(fallbackMaterialCache.HasFallbackMaterial(currentMaterial))
                     {
                         // material is in our swap list, so its already a fallback
-                        materials[i] = r.sharedMaterials[i];
-                        if (debug)
-                            Debug.Log("<color=cyan>*** using fallback :'" + materials[i].shader.name + "' </color>");
+                        fallbackMaterial = fallbackMaterialCache.GetFallBackMaterial(currentMaterial);
+
+                        if(debug)
+                        {
+                            Debug.Log(string.Format("<color=cyan>*** Using existing fallback: '{0}' </color>", fallbackMaterial.shader.name));
+                        }
                     }
                     else
                     {
-                        // material is not in our safe list, create a fallback and store it in dictionary
-                        Material newMtl = CreateFallbackMaterial(r.sharedMaterials[i], user);
-                        materialSwaps[newMtl] = materials[i];
-                        materials[i] = newMtl;
-                        if (debug)
-                            Debug.Log("<color=cyan>*** new fallback :'" + materials[i].shader.name + "' </color>");
+                        // The current material is not in our safe list so create a fallback.
+                        fallbackMaterial = CreateFallbackMaterial(currentMaterial, user);
+
+                        // Map the current material to the fallback and the fallback to itself.
+                        fallbackMaterialCache.AddFallbackMaterial(currentMaterial, fallbackMaterial);
+
+                        fallbackMaterialCache.AddFallbackMaterial(fallbackMaterial, fallbackMaterial);
+
+                        if(debug)
+                        {
+                            Debug.Log(string.Format("<color=cyan>*** Creating new fallback: '{0}' </color>", fallbackMaterial.shader.name));
+                        }
                     }
+
+                    avatarRendererSharedMaterials[i] = fallbackMaterial;
                 }
-                r.sharedMaterials = materials;
+
+                avatarRenderer.sharedMaterials = avatarRendererSharedMaterials;
             }
         }
 
-        public static void ReplaceShadersRealtime(VRC.Core.APIUser user, HashSet<Renderer> avatarRenderers, ref Dictionary<Material, Material> materialSwaps)
+        public static void ReplaceShadersRealtime(VRC.Core.APIUser user, IEnumerable<Renderer> avatarRenderers, FallbackMaterialCache fallbackMaterialCache, bool debug = false)
         {
-            ReplaceShaders(user, avatarRenderers, ref materialSwaps, false);
-        }
-
-        public static void RestoreShaders(VRC.Core.APIUser user, HashSet<Renderer> avatarRenderers, Dictionary<Material, Material> materialSwaps)
-        {
-            foreach (Renderer r in avatarRenderers)
-            {
-                Material[] materials = new Material[r.sharedMaterials.Length];
-                for (int i = 0; i < r.sharedMaterials.Length; ++i)
-                {
-                    if (r.sharedMaterials[i] == null)
-                    {
-                        // create a temporary shader while loading
-                        materials[i] = CreateFallbackMaterial(null, user);
-                    }
-                    else if (materialSwaps.ContainsKey(r.sharedMaterials[i]))
-                        materials[i] = materialSwaps[r.sharedMaterials[i]];
-                    else
-                        materials[i] = r.sharedMaterials[i];
-                }
-                r.sharedMaterials = materials;
-            }
+            ReplaceShaders(user, avatarRenderers, fallbackMaterialCache, debug);
         }
 
         public static void SetupParticleLimits()
@@ -643,32 +778,39 @@ namespace VRCSDK2
         public static Dictionary<ParticleSystem, int> EnforceParticleSystemLimits(GameObject currentAvatar)
         {
             Dictionary<ParticleSystem, int> particleSystems = new Dictionary<ParticleSystem, int>();
-            
-            foreach(ParticleSystem ps in currentAvatar.transform.GetComponentsInChildren<ParticleSystem>(true))
+
+            foreach (ParticleSystem ps in currentAvatar.transform.GetComponentsInChildren<ParticleSystem>(true))
             {
                 int realtime_max = ps_max_particles;
+
+                // always limit collision force
+                var collision = ps.collision;
+                if (collision.colliderForce > ps_max_particle_force)
+                {
+                    collision.colliderForce = ps_max_particle_force;
+                    Debug.LogError("Collision force is restricted on avatars, particle system named " + ps.gameObject.name + " collision force restricted to " + ps_max_particle_force);
+                }
 
                 if (ps_limiter_enabled)
                 {
                     if (particleSystems.Count > ps_max_systems)
                     {
                         Debug.LogError("Too many particle systems, #" + particleSystems.Count + " named " + ps.gameObject.name + " deleted");
-                        Object.DestroyImmediate(ps);
+                        ValidationUtils.RemoveComponent(ps);
+                        continue;
                     }
                     else
                     {
                         var main = ps.main;
-                        var collision = ps.collision;
                         var emission = ps.emission;
 
-
-                        if (ps.GetComponent<ParticleSystemRenderer>())
+                        ParticleSystemRenderer renderer = ps.GetComponent<ParticleSystemRenderer>();
+                        if (renderer != null)
                         {
-                            ParticleSystemRenderer renderer = ps.GetComponent<ParticleSystemRenderer>();
                             if (renderer.renderMode == ParticleSystemRenderMode.Mesh)
                             {
                                 Mesh[] meshes = new Mesh[0];
-                                int heighestPoly = 0;
+                                int highestPoly = 0;
                                 renderer.GetMeshes(meshes);
                                 if (meshes.Length == 0 && renderer.mesh != null)
                                 {
@@ -679,34 +821,28 @@ namespace VRCSDK2
                                 {
                                     if (m.isReadable)
                                     {
-                                        if (m.triangles.Length / 3 > heighestPoly)
+                                        if (m.triangles.Length / 3 > highestPoly)
                                         {
-                                            heighestPoly = m.triangles.Length / 3;
+                                            highestPoly = m.triangles.Length / 3;
                                         }
                                     }
                                     else
                                     {
-                                        if (1000 > heighestPoly)
+                                        if (1000 > highestPoly)
                                         {
-                                            heighestPoly = 1000;
+                                            highestPoly = int.MaxValue;
                                         }
                                     }
                                 }
-                                if (heighestPoly > 0)
+                                if (highestPoly > 0)
                                 {
-                                    heighestPoly = Mathf.Clamp(heighestPoly / ps_mesh_particle_divider, 1, heighestPoly);
-                                    if (heighestPoly < realtime_max)
-                                    {
-                                        realtime_max = realtime_max / heighestPoly;
-                                    }
-                                    else
-                                    {
-                                        realtime_max = 1;
-                                    }
-                                    if (heighestPoly > ps_mesh_particle_poly_limit)
+                                    highestPoly = Mathf.Clamp(highestPoly / ps_mesh_particle_divider, 1, highestPoly);
+                                    realtime_max = Mathf.FloorToInt((float)realtime_max / highestPoly);
+
+                                    if (highestPoly > ps_mesh_particle_poly_limit)
                                     {
                                         Debug.LogError("Particle system named " + ps.gameObject.name + " breached polygon limits, it has been deleted");
-                                        Object.DestroyImmediate(ps);
+                                        ValidationUtils.RemoveComponent(ps);
                                         continue;
                                     }
                                 }
@@ -749,7 +885,7 @@ namespace VRCSDK2
 
                         //Disable collision with PlayerLocal layer
                         collision.collidesWith &= ~(1 << 10);
-                    } 
+                    }
                 }
 
                 particleSystems.Add(ps, realtime_max);
@@ -763,17 +899,17 @@ namespace VRCSDK2
         public static bool ClearLegacyAnimations(GameObject currentAvatar)
         {
             bool hasLegacyAnims = false;
-			foreach(var ani in currentAvatar.GetComponentsInChildren<Animation>(true))
+            foreach (var ani in currentAvatar.GetComponentsInChildren<Animation>(true))
             {
-                if(ani.clip != null)
-                    if(ani.clip.legacy)
+                if (ani.clip != null)
+                    if (ani.clip.legacy)
                     {
                         Debug.LogWarningFormat("Legacy animation found named '{0}' on '{1}', removing", ani.clip.name, ani.gameObject.name);
                         ani.clip = null;
                         hasLegacyAnims = true;
                     }
-                foreach(AnimationState anistate in ani)
-                    if(anistate.clip.legacy)
+                foreach (AnimationState anistate in ani)
+                    if (anistate.clip.legacy)
                     {
                         Debug.LogWarningFormat("Legacy animation found named '{0}' on '{1}', removing", anistate.clip.name, ani.gameObject.name);
                         ani.RemoveClip(anistate.clip);
@@ -783,128 +919,9 @@ namespace VRCSDK2
             return hasLegacyAnims;
         }
 
-        private static IEnumerator FindIllegalComponentsEnumerator(string Name, GameObject currentAvatar, System.Action<Component> onFound)
-        {
-            System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
-            watch.Start();
-
-            System.Type[] foundTypes = WhiteListedTypes;
-            HashSet<System.Type> typesInUse = new HashSet<System.Type>();
-            List<Component> componentsInUse = new List<Component>();
-            Queue<GameObject> children = new Queue<GameObject>();
-            children.Enqueue(currentAvatar.gameObject);
-            while (children.Count > 0)
-            {
-                GameObject child = children.Dequeue();
-                int childCount = child.transform.childCount;
-                for (int idx = 0; idx < child.transform.childCount; ++idx)
-                    children.Enqueue(child.transform.GetChild(idx).gameObject);
-                foreach (Component c in child.transform.GetComponents<Component>())
-                {
-                    if (c == null)
-                        continue;
-
-                    if (typesInUse.Contains(c.GetType()) == false)
-                        typesInUse.Add(c.GetType());
-
-                    if (!foundTypes.Any(allowedType => c.GetType() == allowedType || c.GetType().IsSubclassOf(allowedType)))
-                    {
-                        onFound(c);
-                        yield return null;
-                    }
-
-                    if (watch.ElapsedMilliseconds > 1)
-                    {
-                        yield return null;
-                        watch.Reset();
-                    }
-                }
-            }
-        }
-
-        private static System.Type[] _foundTypes = null;
-        private static System.Type[] WhiteListedTypes
-        {
-            get
-            {
-                if (_foundTypes != null)
-                    return _foundTypes;
-
-                Assembly[] assemblies = System.AppDomain.CurrentDomain.GetAssemblies();
-
-                _foundTypes = ComponentTypeWhiteList.Select((name) =>
-                {
-                    foreach (Assembly a in assemblies)
-                    {
-                        System.Type found = a.GetType(name);
-                        if (found != null)
-                            return found;
-                    }
-
-                //This is really verbose for some SDK scenes, eg.
-                //If they don't have FinalIK installed
-#if VRC_CLIENT && UNITY_EDITOR
-                Debug.LogError("Could not find type " + name);
-#endif
-                return null;
-                }).Where(t => t != null).ToArray();
-
-                return _foundTypes;
-            }
-        }
-
-        private static void RemoveDependancies(Component component)
-        {
-            if (component == null)
-                return;
-
-            Component[] components = component.GetComponents<Component>();
-            if (components == null || components.Length == 0)
-                return;
-
-            System.Type compType = component.GetType();
-            foreach (var c in components)
-            {
-                if (c == null)
-                    continue;
-
-                bool deleteMe = false;
-                object[] requires = c.GetType().GetCustomAttributes(typeof(RequireComponent), true);
-                if (requires == null || requires.Length == 0)
-                    continue;
-
-                foreach (var r in requires)
-                {
-                    RequireComponent rc = r as RequireComponent;
-                    if (rc == null)
-                        continue;
-
-                    if (rc.m_Type0 == compType ||
-                        rc.m_Type1 == compType ||
-                        rc.m_Type2 == compType)
-                    {
-                        deleteMe = true;
-                    }
-                }
-
-                if (deleteMe)
-                {
-                    Debug.LogErrorFormat("Deleting component dependency {0} found on {1}", c.GetType().Name, component.gameObject.name);
-
-                    RemoveDependancies(c);
-
-#if VRC_CLIENT
-                    Object.DestroyImmediate(c, true);
-#else
-                        Object.DestroyImmediate(c,false);
-#endif
-                }
-            }
-        }
-
         private static float GetCurveMax(ParticleSystem.MinMaxCurve minMaxCurve)
         {
-            switch(minMaxCurve.mode)
+            switch (minMaxCurve.mode)
             {
                 case ParticleSystemCurveMode.Constant:
                     return minMaxCurve.constant;
@@ -919,7 +936,7 @@ namespace VRCSDK2
         {
             foreach (KeyValuePair<ParticleSystem, int> kp in particleSystems)
             {
-                if (kp.Key.isPlaying)
+                if (kp.Key != null && kp.Key.isPlaying)
                     return true;
             }
 
@@ -930,11 +947,16 @@ namespace VRCSDK2
         {
             foreach (KeyValuePair<ParticleSystem, int> kp in particleSystems)
             {
-                if (kp.Key.isPlaying)
+                if (kp.Key != null && kp.Key.isPlaying)
                 {
-                    kp.Key.Stop();
+                    kp.Key.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
                 }
             }
+        }
+
+        public static IEnumerable<Shader> FindIllegalShaders(GameObject target)
+        {
+            return ShaderValidation.FindIllegalShaders(target, ShaderWhiteList);
         }
     }
 }

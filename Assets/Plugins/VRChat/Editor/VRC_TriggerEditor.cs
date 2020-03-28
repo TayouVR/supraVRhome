@@ -86,6 +86,7 @@ namespace VRCSDK2
         private SerializedProperty proximityProperty;
         private SerializedProperty interactTextProperty;
         private SerializedProperty advancedProperty;
+        private SerializedProperty ownershipProperty;
         private SerializedProperty helpProperty;
 
         private Dictionary<string, object[]> rpcByteCache = new Dictionary<string, object[]>();
@@ -118,6 +119,7 @@ namespace VRCSDK2
             proximityProperty = serializedObject.FindProperty("proximity");
             interactTextProperty = serializedObject.FindProperty("interactText");
             advancedProperty = serializedObject.FindProperty("UsesAdvancedOptions");
+            ownershipProperty = serializedObject.FindProperty("TakesOwnershipIfNecessary");
             helpProperty = serializedObject.FindProperty("ShowHelp");
 
             serializedObject.Update();
@@ -147,6 +149,7 @@ namespace VRCSDK2
             EditorGUILayout.BeginVertical(GUILayout.MaxWidth(EditorGUIUtility.currentViewWidth - 30));
 
             EditorGUILayout.PropertyField(advancedProperty, new GUIContent("Advanced Mode"));
+            EditorGUILayout.PropertyField(ownershipProperty, new GUIContent("Take Ownership of Action Targets"));
             EditorGUILayout.PropertyField(helpProperty, new GUIContent("Show Help"));
 
             EditorGUILayout.Space();
@@ -289,7 +292,11 @@ namespace VRCSDK2
             Rect selectedRect = new Rect(rect.x, rect.y, rect.width / 4 * 3 - 5, rect.height);
             Rect addRect = new Rect(selectedRect.x + selectedRect.width + 5, rect.y, rect.width / 4, rect.height);
 
-            addTriggerSelectedType = VRC_EditorTools.FilteredEnumPopup(selectedRect, addTriggerSelectedType, v => (v == VRC_Trigger.TriggerType.Custom || ActiveTypes.All(t => t != v)) && (hiddenTriggerTypes.Contains(v) == false));
+            bool showStationTypes = serializedObject.targetObjects.Any(o => (o as VRC_Trigger).GetComponent<VRCSDK2.VRC_Station>() != null);
+            System.Func<VRC_Trigger.TriggerType, bool> predicate =
+                v => hiddenTriggerTypes.Contains(v) == false && (showStationTypes || (v != VRC_Trigger.TriggerType.OnStationEntered && v != VRC_Trigger.TriggerType.OnStationExited));
+
+            addTriggerSelectedType = VRC_EditorTools.FilteredEnumPopup(selectedRect, addTriggerSelectedType, predicate);
 
             if (GUI.Button(addRect, "Add"))
             {
@@ -308,6 +315,8 @@ namespace VRCSDK2
 
                 triggersAry.FindPropertyRelative("TriggerType").intValue = (int)addTriggerSelectedType;
                 triggersAry.FindPropertyRelative("BroadcastType").intValue = (int)VRC_EventHandler.VrcBroadcastType.AlwaysBufferOne;
+                triggersAry.FindPropertyRelative("TriggerIndividuals").boolValue = true;
+                triggersAry.FindPropertyRelative("Layers").intValue = LayerMask.GetMask("Default");
             }
 
             EditorGUILayout.EndHorizontal();
@@ -341,12 +350,10 @@ namespace VRCSDK2
                 if (string.IsNullOrEmpty(nameProperty.stringValue))
                     nameProperty.stringValue = "Unnamed";
 
+                bool showStationTypes = serializedObject.targetObjects.Any(o => (o as VRC_Trigger).GetComponent<VRCSDK2.VRC_Station>() != null);
                 System.Func<string, string> rename = s => s == "Custom" ? s + " (" + nameProperty.stringValue + ")" : s;
                 System.Func<VRC_Trigger.TriggerType, bool> predicate =
-                    v => (v == currentType || ActiveTypes.All(t => t != v))
-                        && hiddenTriggerTypes.Contains(v) == false
-                        && !((v == VRC_Trigger.TriggerType.OnStationEntered || v == VRC_Trigger.TriggerType.OnStationExited) 
-                             && serializedObject.targetObjects.Any(o => (o as VRC_Trigger).GetComponent<VRCSDK2.VRC_Station>() == null));
+                    v => hiddenTriggerTypes.Contains(v) == false && (showStationTypes || (v != VRC_Trigger.TriggerType.OnStationEntered && v != VRC_Trigger.TriggerType.OnStationExited));
 
                 triggerTypeProperty.intValue = (int)VRC_EditorTools.FilteredEnumPopup(typeRect, currentType, predicate, rename);
                 currentType = (VRC_Trigger.TriggerType)triggerTypeProperty.intValue;
@@ -476,6 +483,9 @@ namespace VRCSDK2
 
                         // Squish 'em down
                         float probabilitySum = 1f;
+                        const int MAX_SCALE_PROBABILITIES_LOOP_ITERATIONS = 8;
+                        const int PROBABILITY_VALUE_DECIMAL_PLACES = 3;
+                        int loopIterations = 0;
                         do
                         {
                             if (probabilitySum > 1f)
@@ -499,11 +509,13 @@ namespace VRCSDK2
                                 }
                                 if (countChanged == 0)
                                     probabilitiesProperty.GetArrayElementAtIndex(index).floatValue -= probabilitySum - 1f;
+                                probabilitiesProperty.GetArrayElementAtIndex(index).floatValue = (float)Math.Round(probabilitiesProperty.GetArrayElementAtIndex(index).floatValue, PROBABILITY_VALUE_DECIMAL_PLACES);
                             }
                             probabilitySum = 0f;
                             for (int pIdx = 0; pIdx < probabilitiesProperty.arraySize; ++pIdx)
                                 probabilitySum += probabilitiesProperty.GetArrayElementAtIndex(pIdx).floatValue;
-                        } while (probabilitySum > 1f);
+                            loopIterations++;
+                        } while ((probabilitySum > 1f) && (loopIterations<MAX_SCALE_PROBABILITIES_LOOP_ITERATIONS));
                     }
 
                     if (isFocused)
@@ -663,7 +675,21 @@ namespace VRCSDK2
         {
         }
 
-        private void RenderTargetGameObjectList(SerializedProperty objectsProperty, int idx)
+        private bool doesPropertyContainAnyNullReceivers(SerializedProperty objectsProperty)
+        {
+            bool containsNullReceivers = false;
+            if (objectsProperty.arraySize > 0)
+            {
+                for (int i = 0; i < objectsProperty.arraySize; i++)
+                {
+                    SerializedProperty elem = objectsProperty.GetArrayElementAtIndex(i);
+                    if (elem.objectReferenceValue == null) containsNullReceivers = true;
+                }
+            }
+            return containsNullReceivers;
+        }
+
+        private void RenderTargetGameObjectList(SerializedProperty objectsProperty, int idx, bool receiverRequired = true)
         {
             if (objectLists[idx] == null)
             {
@@ -706,7 +732,9 @@ namespace VRCSDK2
             }
             objectLists[idx].DoLayoutList();
             if (objectsProperty.arraySize == 0)
-                RenderHelpBox("This trigger will target the GameObject it's on, because the receivers list is empty.", MessageType.Info);
+                RenderHelpBox("This trigger will target the GameObject it's on, because the receivers list is empty.", MessageType.Error);
+            else if (receiverRequired && doesPropertyContainAnyNullReceivers(objectsProperty))
+                RenderHelpBox("Trigger with no object set will be ignored!", MessageType.Info);
         }
 
         private void RenderTargetComponentList<T>(SerializedProperty objectsProperty, int idx, string label = "Receivers") where T : Component
@@ -758,7 +786,9 @@ namespace VRCSDK2
             }
             objectLists[idx].DoLayoutList();
             if (objectsProperty.arraySize == 0)
-                RenderHelpBox("This trigger will target the GameObject it's on, because the receivers list is empty.", MessageType.Info);
+                RenderHelpBox("This trigger will target the GameObject it's on, because the receivers list is empty.", MessageType.Error);
+            else if (doesPropertyContainAnyNullReceivers(objectsProperty))
+                RenderHelpBox("Trigger with no object set will be ignored!", MessageType.Info);
         }
 
         public void RenderEventEditor(SerializedProperty shadowProperty, SerializedProperty triggerProperty, SerializedProperty eventProperty, int triggerIdx)
@@ -998,13 +1028,13 @@ namespace VRCSDK2
                     break;
                 case VRC_EventHandler.VrcEventType.AddDamage:
                     {
-                        RenderTargetGameObjectList(parameterObjectsProperty, triggerIdx);
+                        RenderTargetGameObjectList(parameterObjectsProperty, triggerIdx, false);
                         RenderPropertyEditor(shadowProperty, parameterFloatProperty, new GUIContent("Damage"));
                     }
                     break;
                 case VRC_EventHandler.VrcEventType.AddHealth:
                     {
-                        RenderTargetGameObjectList(parameterObjectsProperty, triggerIdx);
+                        RenderTargetGameObjectList(parameterObjectsProperty, triggerIdx, false);
                         RenderPropertyEditor(shadowProperty, parameterFloatProperty, new GUIContent("Health"));
                     }
                     break;
@@ -1015,14 +1045,6 @@ namespace VRCSDK2
                             RenderPropertyEditor(shadowProperty, parameterBoolOpProperty, new GUIContent("Enable"), true);
                     }
                     break;
-#if PLAYMAKER
-                case VRC_EventHandler.VrcEventType.PlaymakerEvent:
-                    {
-                        RenderTargetGameObjectList(parameterObjectsProperty, triggerIdx);
-                        RenderPlaymakerEventPicker(parameterObjectsProperty, parameterStringProperty, new GUIContent("Playmaker Event"));
-                    }
-                    break;
-#endif
                 case VRC_EventHandler.VrcEventType.AddVelocity:
                 case VRC_EventHandler.VrcEventType.SetVelocity:
                     {
@@ -1049,6 +1071,14 @@ namespace VRCSDK2
                         RenderPropertyEditor(shadowProperty, parameterStringProperty, new GUIContent("Text"));
                     }
                     break;
+#if UDON
+                case VRC_EventHandler.VrcEventType.CallUdonMethod:
+                    {
+                        RenderTargetComponentList<VRC.Udon.UdonBehaviour>(parameterObjectsProperty, triggerIdx);
+                        RenderPropertyEditor(shadowProperty, parameterStringProperty, new GUIContent("Method Name"));
+                    }
+                    break;
+#endif
                 default:
                     RenderHelpBox("Unsupported event type", MessageType.Error);
                     break;
@@ -1381,89 +1411,6 @@ namespace VRCSDK2
                 EditorGUILayout.PropertyField(parameterStringProperty, new GUIContent("Custom Method"));
             else
                 parameterStringProperty.stringValue = combined[currentIndex].Split('.')[1];
-        }
-
-        private void RenderPlaymakerEventPicker(SerializedProperty parameterObjectsProperty, SerializedProperty property, GUIContent label)
-        {
-#if PLAYMAKER
-            bool eventsFound = false;
-            bool pmFound = false;
-            List<string> potentialEvents = new List<string>();
-            for (int idx = 0; idx < parameterObjectsProperty.arraySize; ++idx)
-            {
-                GameObject obj = parameterObjectsProperty.GetArrayElementAtIndex(idx).objectReferenceValue as GameObject;
-                if (obj == null)
-                    continue;
-
-                PlayMakerFSM pm = obj.GetComponent<PlayMakerFSM>();
-                if (pm == null)
-                    EditorGUILayout.LabelField("You have a receiver without a PlaymakerFSM attached - " + obj.name);
-                else if (pm.FsmEvents == null || pm.FsmEvents.Length == 0)
-                    EditorGUILayout.LabelField("Your receiver FSM has no events to pick from - " + obj.name);
-
-                if (pm != null)
-                    pmFound = true;
-
-                var newEvents = pm.FsmEvents.Select(el => el.Name).ToList();
-                if (potentialEvents.Count == 0)
-                    potentialEvents.AddRange(newEvents);
-                else
-                    potentialEvents = potentialEvents.Where(p => newEvents.Contains(p)).ToList();
-                if (potentialEvents.Count > 0)
-                    eventsFound = true;
-            }
-
-            if (potentialEvents.Count > 0)
-            {
-                EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.PrefixLabel(label);
-
-                SerializedProperty prop = property;
-                bool renderField = !ListPopup(potentialEvents, prop, false);
-                if (renderField)
-                    EditorGUILayout.PropertyField(property, GUIContent.none);
-
-                EditorGUILayout.EndHorizontal();
-            }
-            else
-            {
-                if (eventsFound)
-                    EditorGUILayout.LabelField("Selected receivers have no FSM events in common.");
-                EditorGUILayout.PropertyField(property, label);
-            }
-
-            string indexString = property.propertyPath;
-            indexString = indexString.Remove(0, "Triggers.Array.data[".Length);
-            indexString = indexString.Remove(indexString.IndexOf(']'));
-            int index = Convert.ToInt16(indexString);
-            var t = property.serializedObject.targetObject as VRC_Trigger;
-            string defaultEventName = t.Triggers[index].TriggerType.ToString();
-
-            if (pmFound && GUILayout.Button("Create Event - " + defaultEventName))
-            {
-                for (int idx = 0; idx < parameterObjectsProperty.arraySize; ++idx)
-                {
-                    GameObject obj = parameterObjectsProperty.GetArrayElementAtIndex(idx).objectReferenceValue as GameObject;
-                    if (obj == null)
-                        continue;
-
-                    PlayMakerFSM pm = obj.GetComponent<PlayMakerFSM>();
-                    if (pm != null && pm.Fsm.HasEvent(defaultEventName) == false)
-                    {
-                        HutongGames.PlayMaker.FsmEvent[] events = new HutongGames.PlayMaker.FsmEvent[pm.FsmEvents.Length + 1];
-                        for (int ev = 0; ev < events.Length - 1; ++ev)
-                            events[ev] = pm.FsmEvents[ev];
-                        events[events.Length - 1] = new HutongGames.PlayMaker.FsmEvent(defaultEventName);
-                        pm.Fsm.Events = events;
-                    }
-                }
-                property.stringValue = defaultEventName;
-
-                HutongGames.PlayMakerEditor.BaseEditorWindow.GetWindow<HutongGames.PlayMakerEditor.FsmEditorWindow>().Focus();
-            }
-#else
-            EditorGUILayout.PropertyField(property, label);
-#endif
         }
 
         private void RenderPropertyEditor(SerializedProperty shadowProperty, SerializedProperty property, GUIContent label, bool isBoolOp = false)

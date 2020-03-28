@@ -39,8 +39,11 @@ namespace VRCSDK2
 
             base.Start();
 
+            var desc = pipelineManager.GetComponent<VRC_AvatarDescriptor>();
+            desc.PositionPortraitCamera(imageCapture.shotCamera.transform);
+
             Application.runInBackground = true;
-            UnityEngine.VR.VRSettings.enabled = false;
+            UnityEngine.XR.XRSettings.enabled = false;
 
             uploadButton.onClick.AddListener(SetupUpload);
 
@@ -58,29 +61,32 @@ namespace VRCSDK2
 
         void Login()
         {
-            ApiCredentials.Load();
-            APIUser.Login(
-                delegate (APIUser user)
-                {
-                    pipelineManager.user = user;
+            if (!ApiCredentials.Load())
+                LoginErrorCallback("Not logged in");
+            else
+                APIUser.FetchCurrentUser(
+                    delegate (ApiModelContainer<APIUser> c)
+                    {
+                        pipelineManager.user = c.Model as APIUser;
 
-                    API.Fetch<ApiAvatar>(pipelineManager.blueprintId,
-                        (c) =>
-                        {
-                            Debug.Log("<color=magenta>Updating an existing avatar.</color>");
-                            apiAvatar = c.Model as ApiAvatar;
-                            pipelineManager.completedSDKPipeline = !string.IsNullOrEmpty(apiAvatar.authorId);
-                            SetupUI();
-                        },
-                        (c) =>
-                        {
-                            Debug.Log("<color=magenta>Creating a new avatar.</color>");
-                            apiAvatar = new ApiAvatar();
-                            apiAvatar.id = pipelineManager.blueprintId;
-                            pipelineManager.completedSDKPipeline = !string.IsNullOrEmpty(apiAvatar.authorId);
-                            SetupUI();
-                        });
-                }, LoginErrorCallback);
+                        ApiAvatar av = new ApiAvatar() { id = pipelineManager.blueprintId };
+                        av.Get(false,
+                            (c2) =>
+                            {
+                                Debug.Log("<color=magenta>Updating an existing avatar.</color>");
+                                apiAvatar = c2.Model as ApiAvatar;
+                                pipelineManager.completedSDKPipeline = !string.IsNullOrEmpty(apiAvatar.authorId);
+                                SetupUI();
+                            },
+                            (c2) =>
+                            {
+                                Debug.Log("<color=magenta>Creating a new avatar.</color>");
+                                apiAvatar = new ApiAvatar();
+                                apiAvatar.id = pipelineManager.blueprintId;
+                                pipelineManager.completedSDKPipeline = !string.IsNullOrEmpty(apiAvatar.authorId);
+                                SetupUI();
+                            });
+                    }, (c) => { LoginErrorCallback(c.Error); });
         }
 
         void SetupUI()
@@ -120,7 +126,7 @@ namespace VRCSDK2
                         liveBpImage.enabled = false;
                         bpImage.enabled = true;
 
-                        ImageDownloader.DownloadImage(apiAvatar.imageUrl, delegate (Texture2D obj) {
+                        ImageDownloader.DownloadImage(apiAvatar.imageUrl, 0, delegate (Texture2D obj) {
                             bpImage.texture = obj;
                         });
                     }
@@ -230,7 +236,7 @@ namespace VRCSDK2
         private string GetFriendlyAvatarFileName(string type)
         {
             return "Avatar - " + blueprintName.text + " - " + type + " - " + Application.unityVersion + "_" + ApiWorld.VERSION.ApiVersion +
-                   "_" + API.GetAssetPlatformString() + "_" + API.GetServerEnvironmentForApiUrl();
+                   "_" + VRC.Tools.Platform + "_" + API.GetServerEnvironmentForApiUrl();
         }
 
         List<string> BuildTags()
@@ -341,7 +347,7 @@ namespace VRCSDK2
             {
                 bpImage.enabled = true;
                 liveBpImage.enabled = false;
-                ImageDownloader.DownloadImage(apiAvatar.imageUrl, delegate (Texture2D obj) {
+                ImageDownloader.DownloadImage(apiAvatar.imageUrl, 0, delegate (Texture2D obj) {
                     bpImage.texture = obj;
                 });
             }

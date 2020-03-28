@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿#if UNITY_EDITOR
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -109,7 +110,7 @@ namespace VRC.Core
             {
                 bool done = false;
                 RemoteConfig.Init(
-                    delegate () { done = true; }, 
+                    delegate () { done = true; },
                     delegate () { done = true; }
                 );
 
@@ -229,7 +230,7 @@ namespace VRC.Core
 
             LogApiFileStatus(apiFile, false);
 
-            while (apiFile.HasQueuedOperation())
+            while (apiFile.HasQueuedOperation(EnableDeltaCompression))
             {
                 wait = true;
 
@@ -298,7 +299,7 @@ namespace VRC.Core
             LogApiFileStatus(apiFile, false);
 
             // verify previous file op is complete
-            if (apiFile.HasQueuedOperation())
+            if (apiFile.HasQueuedOperation(EnableDeltaCompression))
             {
                 Error(onError, apiFile, "A previous upload is still being processed. Please try again later.");
                 yield break;
@@ -1042,6 +1043,8 @@ namespace VRC.Core
             // assume it's a .gz, or a .unitypackage
             // else nothing to do
 
+#if !UNITY_ANDROID
+
             if (!IsGZipCompressed(filename))
             {
                 Debug.Log("CreateOptimizedFile: (not gzip compressed, done)");
@@ -1072,7 +1075,7 @@ namespace VRC.Core
             yield return null;
 
             // create output
-            DotZLib.GZipStream outStream = null;    
+            DotZLib.GZipStream outStream = null;
             try
             {
                 outStream = new DotZLib.GZipStream(outputFilename, DotZLib.CompressLevel.Best, true, kGzipBufferSize);    // this lib supports rsyncable output
@@ -1193,11 +1196,20 @@ namespace VRC.Core
             if (outStream != null)
                 outStream.Close();
             outStream = null;
-
             yield return null;
 
             if (onSuccess != null)
                 onSuccess(FileOpResult.Success);
+#else
+            yield return null;
+            //if (onError != null)
+            //    onError("Not supported on ANDROID platform.");
+
+            Debug.Log("CreateOptimizedFile: Android unsupported");
+            if (onSuccess != null)
+                onSuccess(FileOpResult.Unchanged);
+            yield break;
+#endif
         }
 
         public IEnumerator CreateFileSignatureInternal(string filename, string outputSignatureFilename, Action onSuccess, Action<string> onError)
@@ -2067,8 +2079,10 @@ namespace VRC.Core
                         onError("Unknown file category type: " + fileDesc.category);
                     yield break;
             }
-            
+
             yield return uploadFileComponentVerifyRecord(apiFile, fileDescriptorType, filename, md5Base64, fileSize, fileDesc, onSuccess, onError, onProgess, cancelQuery);
         }
     }
 }
+
+#endif

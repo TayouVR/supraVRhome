@@ -4,8 +4,9 @@ using UnityEngine;
 using UnityEditor;
 using System.Collections;
 using System;
-using System.Reflection;
 using System.Linq;
+using UnityEngine.Rendering;
+using VRCSDK2.Validation.Performance.Stats;
 
 /// <summary>
 /// Setup up SDK env on editor launch
@@ -17,7 +18,7 @@ public class EnvConfig
         BuildTarget.Android, BuildTarget.iOS,
         BuildTarget.StandaloneLinux, BuildTarget.StandaloneLinux64, BuildTarget.StandaloneLinuxUniversal,
         BuildTarget.StandaloneWindows, BuildTarget.StandaloneWindows64,
-        BuildTarget.StandaloneOSXIntel, BuildTarget.StandaloneOSXIntel64, BuildTarget.StandaloneOSXUniversal
+        BuildTarget.StandaloneOSX
     };
 
 #if !VRC_CLIENT
@@ -30,16 +31,14 @@ public class EnvConfig
 
     static System.Collections.Generic.Dictionary<BuildTarget, UnityEngine.Rendering.GraphicsDeviceType[]> allowedGraphicsAPIs = new System.Collections.Generic.Dictionary<BuildTarget, UnityEngine.Rendering.GraphicsDeviceType[]>()
     {
-        { BuildTarget.Android, null },
+        { BuildTarget.Android, new [] { GraphicsDeviceType.OpenGLES3, /* GraphicsDeviceType.Vulkan */ }},
         { BuildTarget.iOS, null },
         { BuildTarget.StandaloneLinux, null },
         { BuildTarget.StandaloneLinux64, null },
         { BuildTarget.StandaloneLinuxUniversal, null },
         { BuildTarget.StandaloneWindows, new UnityEngine.Rendering.GraphicsDeviceType[] { UnityEngine.Rendering.GraphicsDeviceType.Direct3D11 } },
         { BuildTarget.StandaloneWindows64, new UnityEngine.Rendering.GraphicsDeviceType[] { UnityEngine.Rendering.GraphicsDeviceType.Direct3D11 } },
-        { BuildTarget.StandaloneOSXIntel, null },
-        { BuildTarget.StandaloneOSXIntel64, null },
-        { BuildTarget.StandaloneOSXUniversal, null }
+        { BuildTarget.StandaloneOSX, null }
     };
 
     static string[] ensureTheseShadersAreAvailable = new string[]
@@ -121,6 +120,17 @@ public class EnvConfig
         "Toon/Lit Cutout",
         "Toon/Lit Cutout (Double)",
         "Toon/Lit Outline",
+        "VRChat/Mobile/Diffuse",
+        "VRChat/Mobile/Bumped Uniform Diffuse",
+        "VRChat/Mobile/Bumped Uniform Specular",
+        "VRChat/Mobile/Toon Lit",
+        "VRChat/Mobile/MatCap Lit",
+        "VRChat/Mobile/Skybox",
+        "VRChat/Mobile/Lightmapped",
+        "VRChat/PC/Toon Lit",
+        "VRChat/PC/Toon Lit (Double)",
+        "VRChat/PC/Toon Lit Cutout",
+        "VRChat/PC/Toon Lit Cutout (Double)",
         "Unlit/Color",
         "Unlit/Transparent",
         "Unlit/Transparent Cutout",
@@ -175,6 +185,8 @@ public class EnvConfig
             VRC.Core.RemoteConfig.Init();
         }
 
+        LoadEditorResources();
+
         return true;
     }
 
@@ -227,8 +239,7 @@ public class EnvConfig
                     importer.SetExcludeFromAnyPlatform(BuildTarget.StandaloneWindows64, false);
                     importer.SetExcludeFromAnyPlatform(BuildTarget.StandaloneLinux, false);
                     importer.SetExcludeFromAnyPlatform(BuildTarget.StandaloneLinux64, false);
-                    importer.SetExcludeFromAnyPlatform(BuildTarget.StandaloneOSXIntel, false);
-                    importer.SetExcludeFromAnyPlatform(BuildTarget.StandaloneOSXIntel64, false);
+                    importer.SetExcludeFromAnyPlatform(BuildTarget.StandaloneOSX, false);
                 }
                 else
                 {
@@ -239,15 +250,14 @@ public class EnvConfig
                     importer.SetCompatibleWithPlatform(BuildTarget.StandaloneWindows64, false);
                     importer.SetCompatibleWithPlatform(BuildTarget.StandaloneLinux, false);
                     importer.SetCompatibleWithPlatform(BuildTarget.StandaloneLinux64, false);
-                    importer.SetCompatibleWithPlatform(BuildTarget.StandaloneOSXIntel, false);
-                    importer.SetCompatibleWithPlatform(BuildTarget.StandaloneOSXIntel64, false);
+                    importer.SetCompatibleWithPlatform(BuildTarget.StandaloneOSX, false);
                 }
                 importer.SaveAndReimport();
             }
         }
     }
 
-    [MenuItem("VRChat SDK/Force Configure Player Settings")]
+    [MenuItem("VRChat SDK/Utilities/Force Configure Player Settings")]
     public static void ConfigurePlayerSettings()
     {
         Debug.Log("Setting required PlayerSettings...");
@@ -269,18 +279,33 @@ public class EnvConfig
 
         SetDefaultGraphicsAPIs();
         SetGraphicsSettings();
+        SetAudioSettings();
         SetPlayerSettings();
 
 #if VRC_CLIENT
-        RefreshClientVRSDKs();
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
 #else
         // SDK
 
-        // default to steam runtime in sdk (shouldn't matter)
-        SetVRSDKs(new string[] { "None", "OpenVR", "Oculus" });
+		// default to steam runtime in sdk (shouldn't matter)
+		SetVRSDKs(EditorUserBuildSettings.selectedBuildTargetGroup, new string[] { "None", "OpenVR", "Oculus" });
 
         VRC.Core.AnalyticsSDK.Initialize(VRC.Core.SDKClientUtilities.GetSDKVersionDate());
 #endif
+
+        // VRCLog should handle disk writing
+        PlayerSettings.usePlayerLog = false;
+        if (EditorUserBuildSettings.selectedBuildTargetGroup != BuildTargetGroup.Standalone)
+        {
+            foreach (var logType in Enum.GetValues(typeof(LogType)).Cast<LogType>())
+                PlayerSettings.SetStackTraceLogType(logType, StackTraceLogType.None);
+        }
+        else
+        {
+            foreach (var logType in Enum.GetValues(typeof(LogType)).Cast<LogType>())
+                PlayerSettings.SetStackTraceLogType(logType, StackTraceLogType.ScriptOnly);
+        }
     }
 
     static void EnableBatching(bool enable)
@@ -331,7 +356,7 @@ public class EnvConfig
         playerSettingsSerializedObject.ApplyModifiedProperties();
     }
 
-    public static void SetVRSDKs(string[] sdkNames)
+    public static void SetVRSDKs(BuildTargetGroup buildTargetGroup, string[] sdkNames)
     {
         Debug.Log("Setting virtual reality SDKs in PlayerSettings: ");
         if (sdkNames != null)
@@ -363,20 +388,33 @@ public class EnvConfig
             {
                 SerializedProperty property = (SerializedProperty)enumerator.Current;
 
-                if (property != null && property.name == "m_BuildTarget")
-                {
-                    // only change setting on "Standalone" entry
-                    if (property.stringValue != "Standalone")
-                        break;
-                }
+
+				if (property != null && property.name == "m_BuildTarget")
+				{
+					if (property.stringValue != buildTargetGroup.ToString())
+						break;
+				}
 
                 if (property != null && property.name == "m_Devices")
                 {
-                    property.ClearArray();
-                    property.arraySize = (sdkNames != null) ? sdkNames.Length : 0;
-                    for (int j = 0; j < property.arraySize; j++)
+                    bool overwrite = true;
+                    if (property.arraySize == sdkNames.Length)
                     {
-                        property.GetArrayElementAtIndex(j).stringValue = sdkNames[j];
+                        overwrite = false;
+                        for (int e = 0; e < sdkNames.Length; ++e)
+                        {
+                            if (property.GetArrayElementAtIndex(e).stringValue != sdkNames[e])
+                                overwrite = true;
+                        }
+                    }
+                    if (overwrite)
+                    {
+                        property.ClearArray();
+                        property.arraySize = (sdkNames != null) ? sdkNames.Length : 0;
+                        for (int j = 0; j < property.arraySize; j++)
+                        {
+                            property.GetArrayElementAtIndex(j).stringValue = sdkNames[j];
+                        }
                     }
                 }
             }
@@ -390,9 +428,9 @@ public class EnvConfig
 #if VRC_CLIENT
 
 #if VRC_VR_STEAM
-        SetVRSDKs(new string[] { "None", "OpenVR", "Oculus" });
+        SetVRSDKs( BuildTargetGroup.Standalone, new string[] { "None", "OpenVR", "Oculus" });
 #else
-		SetVRSDKs(new string[] { "None", "Oculus", "OpenVR" });
+		SetVRSDKs(BuildTargetGroup.Standalone, new string[] { "None", "Oculus", "OpenVR" });
 #endif
 
 #endif // VRC_CLIENT
@@ -470,8 +508,10 @@ public class EnvConfig
         SerializedProperty lensFlare = graphicsManager.FindProperty("m_LensFlare.m_Mode");
         lensFlare.enumValueIndex = 1;
 
-#if ENV_SET_INCLUDED_SHADERS
+#if ENV_SET_INCLUDED_SHADERS && VRC_CLIENT
         SerializedProperty alwaysIncluded = graphicsManager.FindProperty("m_AlwaysIncludedShaders");
+        alwaysIncluded.arraySize = 0;   // clear GraphicsSettings->Always Included Shaders - these cause a +5s app startup time increase on Quest.  
+                                        // include Shader objects as resources instead
 
 #if ENV_SEARCH_FOR_SHADERS
         Resources.LoadAll("", typeof(Shader));
@@ -484,7 +524,7 @@ public class EnvConfig
         System.Collections.Generic.List<Shader> foundShaders = new System.Collections.Generic.List<Shader>();
 #endif
 
-        for (int shaderIdx = 0; shaderIdx < ensureTheseShadersAreAvailable.Length; ++shaderIdx)
+        for (int shaderIdx = 0; shaderIdx < ensureTheseShadersAreAvailable.Length; ++shaderIdx) 
         {
             if (foundShaders.Any(s => s.name == ensureTheseShadersAreAvailable[shaderIdx]))
                 continue;
@@ -495,9 +535,11 @@ public class EnvConfig
 
         foundShaders.Sort((s1, s2) => s1.name.CompareTo(s2.name));
 
-        alwaysIncluded.arraySize = foundShaders.Count;
+        // populate Resources list of "always included shaders"
+        ShaderAssetList alwaysIncludedShaders = AssetDatabase.LoadAssetAtPath<ShaderAssetList>("Assets/Resources/AlwaysIncludedShaders.asset");
+        alwaysIncludedShaders.Shaders = new Shader[foundShaders.Count];
         for (int shaderIdx = 0; shaderIdx < foundShaders.Count; ++shaderIdx)
-            alwaysIncluded.GetArrayElementAtIndex(shaderIdx).objectReferenceValue = foundShaders[shaderIdx];
+            alwaysIncludedShaders.Shaders[shaderIdx] = foundShaders[shaderIdx];
 #endif
 
         SerializedProperty preloaded = graphicsManager.FindProperty("m_PreloadedShaders");
@@ -578,12 +620,43 @@ public class EnvConfig
 
         graphicsManager.ApplyModifiedProperties();
     }
+    
+    static void SetAudioSettings()
+    {
+        var config = AudioSettings.GetConfiguration();
+        config.dspBufferSize = 0; // use default
+        config.speakerMode = AudioSpeakerMode.Stereo; // use default
+        config.sampleRate = 0; // use default
+        if (EditorUserBuildSettings.selectedBuildTargetGroup == BuildTargetGroup.Android)
+        {
+            config.numRealVoices = 24;
+            config.numVirtualVoices = 24;
+        }
+        else
+        {
+            config.numRealVoices = 32;
+            config.numVirtualVoices = 63;
+        }
+        AudioSettings.Reset(config);
+    }
 
     static void SetPlayerSettings()
     {
         // asset bundles MUST be built with settings that are compatible with VRC client
-        PlayerSettings.colorSpace = ColorSpace.Linear;
-        PlayerSettings.virtualRealitySupported = true;
+#if VRC_OVERRIDE_COLORSPACE_GAMMA
+            PlayerSettings.colorSpace = ColorSpace.Gamma;
+#else
+            PlayerSettings.colorSpace = ColorSpace.Linear;
+#endif
+
+#if !VRC_CLIENT // In client rely on platform-switcher
+            PlayerSettings.virtualRealitySupported = true;
+#endif
+
+        PlayerSettings.graphicsJobs = false; // else we get occasional crashing
+
+        PlayerSettings.gpuSkinning = true;
+
         PlayerSettings.stereoRenderingPath = StereoRenderingPath.SinglePass;
 
         EnableBatching(true);
@@ -605,5 +678,10 @@ public class EnvConfig
 #pragma warning restore CS0618 // Type or member is obsolete
         }
 #endif
+    }
+
+    private static void LoadEditorResources()
+    {
+        AvatarPerformanceStats.Initialize();
     }
 }

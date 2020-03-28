@@ -26,6 +26,12 @@ public class AvatarDescriptorEditor : Editor
 
         // DrawDefaultInspector();
 
+        if(VRCSdkControlPanel.window != null)
+        { 
+            if( GUILayout.Button( "Select this avatar in the SDK control panel" ) )
+                VRCSdkControlPanel.SelectAvatar(avatarDescriptor);
+        }
+
         avatarDescriptor.ViewPosition = EditorGUILayout.Vector3Field("View Position", avatarDescriptor.ViewPosition);
         //avatarDescriptor.Name = EditorGUILayout.TextField("Avatar Name", avatarDescriptor.Name);
         avatarDescriptor.Animations = (VRCSDK2.VRC_AvatarDescriptor.AnimationSet)EditorGUILayout.EnumPopup("Default Animation Set", avatarDescriptor.Animations);
